@@ -7,7 +7,7 @@ use web_pages::{
     index::IndexPage
 };
 use dioxus::dioxus_core::VirtualDom;
-use axum::{response::Html, routing::get, Extension, Router};
+use axum::{extract::Path, http::StatusCode, response::{Html, IntoResponse}, routing::get, Extension, Router};
 use std::net::SocketAddr;
 
 
@@ -19,7 +19,7 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/", get(index))
+        .route("/:link", get(index))
         .nest("/api", routes::api::api_router())
         .layer(Extension(config))
         .layer(Extension(pool.clone()));
@@ -31,9 +31,11 @@ async fn main() {
     axum::serve(listener, app.into_make_service()).await.unwrap();
 }
 
-async fn index() -> Html<String> {
-    let html = render(VirtualDom::new(IndexPage));
 
-    Html(html)  
+async fn index(Path(link): Path<String>) -> impl IntoResponse {
+    // Do something with the link, e.g., look it up in a database
+    let response = format!("Received link: {}", link);
+
+    // Return the response
+    (StatusCode::OK, response)
 }
-

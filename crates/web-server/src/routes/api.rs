@@ -37,7 +37,7 @@ async fn create_link(
     })?;
 
     if payload.custom_slug.clone().is_some() {
-        let existing_link = Link::get_by_custom_slug(payload.custom_slug.clone().unwrap(), conn);
+        let existing_link = Link::get_by_slug(&payload.custom_slug.clone().unwrap(), conn);
 
         if existing_link.is_err() {
             return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericError::new("Internal Server Error")));
