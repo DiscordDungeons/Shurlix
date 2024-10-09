@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  db:
+    container_name: shurlix-dev-db
+    image: postgres:16
+    volumes:
+      - './data:/data'
+    environment:
+      - POSTGRES_PASSWORD=example
+      - POSTGRES_USER=root
+      - POSTGRES_DB=shurlix
+    ports:
+      - 5432:5432

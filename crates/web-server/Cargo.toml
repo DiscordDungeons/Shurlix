@@ -12,3 +12,7 @@ tokio = { version = "1", default-features = false, features = ["macros", "fs", "
 web-pages = { version = "0.1.0", path = "../web-pages" }
 dioxus = "0.5.6"
 dioxus-ssr = "0.5.6"
+dotenvy = "0.15"
+serde = "1.0.210"
+rand = "0.8.5"
+owo-colors = "4.1.0"
