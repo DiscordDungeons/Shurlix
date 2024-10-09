@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, routing::post, Extension, Json, Router};
 use db::{models::{Link, NewLink}, DbPool};
 
-use crate::{config::Config, util};
+use crate::{common::GenericError, config::Config, util};
 
 
 use serde::{Deserialize, Serialize};
@@ -10,21 +10,6 @@ use serde::{Deserialize, Serialize};
 struct CreateLink {
     custom_slug: Option<String>,
     link: String,
-}
-
-#[derive(Serialize, Debug)]
-struct GenericError {
-    message: String,
-}
-
-impl GenericError {
-    pub fn new(message: &str) -> Json<Self> {
-        Json(Self { message: message.to_string() })
-    }
-
-    pub fn from_string(message: String) -> Json<Self> {
-        Json(Self { message: message })
-    }
 }
 
 async fn create_link(

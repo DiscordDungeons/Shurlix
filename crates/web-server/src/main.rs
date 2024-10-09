@@ -1,13 +1,16 @@
 mod config;
 mod util;
 mod routes;
+mod common;
 
+use common::GenericError;
+use db::{models::Link, DbPool};
 use web_pages::{
     render,
     index::IndexPage
 };
 use dioxus::dioxus_core::VirtualDom;
-use axum::{extract::Path, http::StatusCode, response::{Html, IntoResponse}, routing::get, Extension, Router};
+use axum::{extract::Path, http::StatusCode, response::{Html, IntoResponse, Redirect}, routing::get, Extension, Router};
 use std::net::SocketAddr;
 
 
@@ -19,7 +22,7 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/:link", get(index))
+        .route("/:slug", get(index))
         .nest("/api", routes::api::api_router())
         .layer(Extension(config))
         .layer(Extension(pool.clone()));
@@ -32,10 +35,27 @@ async fn main() {
 }
 
 
-async fn index(Path(link): Path<String>) -> impl IntoResponse {
-    // Do something with the link, e.g., look it up in a database
-    let response = format!("Received link: {}", link);
+async fn index(
+    Extension(pool): Extension<DbPool>,
+    Path(slug): Path<String>,
+) -> impl IntoResponse {
+    let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericError::from_string(e.to_string()))
+    })?;
 
-    // Return the response
-    (StatusCode::OK, response)
+    let existing_link = Link::get_by_slug(&slug, conn);
+
+    if existing_link.is_err() {
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericError::new("Internal Server Error")));
+    }
+
+    let existing_link = existing_link.unwrap();
+
+    if existing_link.len() == 0 {
+        return Err((StatusCode::NOT_FOUND, GenericError::new("Slug not found.")));
+    }
+
+    let link = existing_link.first().unwrap();
+
+    Ok(Redirect::permanent(&link.original_link))
 }
