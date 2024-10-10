@@ -1,12 +1,8 @@
 [package]
-name = "web-pages"
+name = "frontend"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-db = { version = "0.1.0", path = "../db" }
-dioxus = "0.5.6"
-dioxus-ssr = "0.5.6"
-log = "0.4.22"
