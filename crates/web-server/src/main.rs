@@ -2,16 +2,38 @@ mod config;
 mod util;
 mod routes;
 mod common;
+mod asset;
 
+use asset::Asset;
 use common::GenericError;
 use db::{models::Link, DbPool};
-use web_pages::{
-    render,
-    index::IndexPage
-};
-use dioxus::dioxus_core::VirtualDom;
-use axum::{extract::Path, http::StatusCode, response::{Html, IntoResponse, Redirect}, routing::get, Extension, Router};
+use axum::{body::Body, extract::Path, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
+use mime_guess::from_path;
 use std::net::SocketAddr;
+
+async fn asset_handler(uri: axum::http::Uri) -> Response {
+    let path = uri.clone().to_string().replace("/assets/", "");
+    match Asset::get(&path) {
+        Some(file) => {
+            // Determine MIME type
+            let mime_type = from_path(&path).first().unwrap_or(mime::APPLICATION_OCTET_STREAM);
+
+            // Create a response with the correct content type and body
+            Response::builder()
+                .header(axum::http::header::CONTENT_TYPE, mime_type.as_ref())
+                .body(Body::from(file.data)) // Convert file.data to Body
+                .unwrap()
+        },
+        None => {
+            let not_found_message = "File not found";
+            // Create a 404 response
+            Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(Body::from(not_found_message)) // Convert to Body
+                .unwrap()
+        }
+    }
+}
 
 
 #[tokio::main]
@@ -23,6 +45,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(index))
+        .route("/assets/*path", get(asset_handler))
         .route("/:slug", get(handle_slug))
         .nest("/api", routes::api::api_router())
         .layer(Extension(config))
@@ -35,14 +58,8 @@ async fn main() {
     axum::serve(listener, app.into_make_service()).await.unwrap();
 }
 
-async fn index() -> Html<String> {
-    // create a VirtualDom with the app component
-    let mut app = VirtualDom::new(IndexPage);
-    // rebuild the VirtualDom before rendering
-    app.rebuild_in_place();
-
-    // render the VirtualDom to HTML
-    Html(dioxus_ssr::render(&app))
+async fn index() -> impl IntoResponse {
+    axum::response::Html(include_str!("../static/index.html")) // Serve your index.html
 }
 
 async fn handle_slug(
