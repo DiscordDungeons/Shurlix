@@ -52,11 +52,10 @@ async fn create_link(
     Ok((StatusCode::CREATED, Json(link)))
 }
 
-
-// Starts at /api
-pub fn api_router() -> Router {
-    let api_router = Router::new()
+// Starts at /api/link
+pub fn links_router() -> Router {
+    let links_router = Router::new()
         .route("/shorten", post(create_link));
 
-    api_router
+    links_router
 }

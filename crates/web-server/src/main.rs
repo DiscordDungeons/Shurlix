@@ -22,7 +22,8 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/:slug", get(index))
+        .route("/", get(index))
+        .route("/:slug", get(handle_slug))
         .nest("/api", routes::api::api_router())
         .layer(Extension(config))
         .layer(Extension(pool.clone()));
@@ -34,8 +35,17 @@ async fn main() {
     axum::serve(listener, app.into_make_service()).await.unwrap();
 }
 
+async fn index() -> Html<String> {
+    // create a VirtualDom with the app component
+    let mut app = VirtualDom::new(IndexPage);
+    // rebuild the VirtualDom before rendering
+    app.rebuild_in_place();
 
-async fn index(
+    // render the VirtualDom to HTML
+    Html(dioxus_ssr::render(&app))
+}
+
+async fn handle_slug(
     Extension(pool): Extension<DbPool>,
     Path(slug): Path<String>,
 ) -> impl IntoResponse {
