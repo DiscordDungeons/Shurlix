@@ -10,7 +10,8 @@ use crate::{config::Config, util::jwt::decode_user_token};
 #[derive(Debug, Clone)]
 pub struct AuthedUser(pub Option<User>);
 
-// Implementing FromRequestParts to avoid conflicts
+
+// TODO: Clean this up?
 #[async_trait]
 impl<S> FromRequestParts<S> for AuthedUser
 where
@@ -34,8 +35,8 @@ where
 			 if let Ok(cookie_str) = cookie_header.to_str() {
 					for cookie in cookie_str.split(';') {
 						if let Ok(cookie) = Cookie::from_str(cookie.trim()) {
-						// Add the cookie to the CookieJar
-						cookie_jar = cookie_jar.add(cookie);
+							// Add the cookie to the CookieJar
+							cookie_jar = cookie_jar.add(cookie);
 						}
 					}
 

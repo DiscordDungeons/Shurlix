@@ -15,7 +15,6 @@ use std::net::SocketAddr;
 
 
 
-
 async fn asset_handler(uri: axum::http::Uri) -> Response {
     let path = uri.clone().to_string().replace("/assets/", "");
     match Asset::get(&path) {
@@ -43,6 +42,8 @@ async fn asset_handler(uri: axum::http::Uri) -> Response {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let config = config::Config::new();
 
     let pool = db::create_pool(&config.database_url);
@@ -59,7 +60,7 @@ async fn main() {
 
     // run it
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("listening on {}", addr);
+    log::info!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     axum::serve(listener, app.into_make_service()).await.unwrap();
 }

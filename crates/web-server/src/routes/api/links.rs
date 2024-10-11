@@ -1,6 +1,6 @@
 use axum::{extract::Path, http::StatusCode, routing::{delete, post}, Extension, Json, Router};
-use db::{models::{Link, NewLink}, DbPool};
-use crate::{common::{APIResponse, GenericMessage}, config::Config, constants, util::{self, is_url, starts_with_any}};
+use db::{models::{Link, NewLink, User}, DbPool};
+use crate::{common::{APIResponse, GenericMessage}, config::Config, constants, extensions::auth::AuthedUser, util::{self, is_url, starts_with_any}};
 
 
 use serde::{Deserialize, Serialize};
@@ -14,12 +14,13 @@ struct CreateLink {
 async fn create_link(
     Extension(config): Extension<Config>,
     Extension(pool): Extension<DbPool>,
+    AuthedUser(user): AuthedUser,
     Json(payload): Json<CreateLink>
 ) -> APIResponse<Link> {
-    let owner_id: Option<i32> = None;
+    let owner_id: Option<i32> = user.map(|u| u.id);
 
-    if !config.allow_anonymous_shorten {
-        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")))
+    if !config.allow_anonymous_shorten && owner_id.is_none() {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
     }
 
     // Validate before even getting the db
