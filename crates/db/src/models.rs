@@ -11,7 +11,7 @@ pub struct Link {
     pub slug: String,
     pub custom_slug: Option<String>,
     pub original_link: String,
-    pub owner_id: i32,
+    pub owner_id: Option<i32>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>
@@ -51,7 +51,7 @@ pub struct NewLink {
     pub slug: String,
     pub custom_slug: Option<String>,
     pub original_link: String,
-    pub owner_id: i32,
+    pub owner_id: Option<i32>,
 }
 
 impl NewLink {

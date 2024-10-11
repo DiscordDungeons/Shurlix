@@ -8,7 +8,7 @@ diesel::table! {
         #[max_length = 255]
         custom_slug -> Nullable<Varchar>,
         original_link -> Text,
-        owner_id -> Int4,
+        owner_id -> Nullable<Int4>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,

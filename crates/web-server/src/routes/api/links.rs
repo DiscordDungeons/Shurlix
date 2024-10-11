@@ -16,6 +16,12 @@ async fn create_link(
     Extension(pool): Extension<DbPool>,
     Json(payload): Json<CreateLink>
 ) -> APIResponse<Link> {
+    let owner_id: Option<i32> = None;
+
+    if !config.allow_anonymous_shorten {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")))
+    }
+
     // Validate before even getting the db
 
     if !is_url(&payload.link) {
@@ -55,7 +61,7 @@ async fn create_link(
     let new_link = NewLink {
         custom_slug: payload.custom_slug,
         original_link: payload.link,
-        owner_id: 1,
+        owner_id,
         slug: slug
     };
 
@@ -70,6 +76,7 @@ async fn delete_link(
     Path(slug): Path<String>,
 ) -> APIResponse<GenericMessage> {
     // TODO: Check link ownership
+
 
     let conn = &mut pool.get().map_err(|e| {
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
