@@ -3,6 +3,7 @@ mod util;
 mod routes;
 mod common;
 mod asset;
+mod constants;
 
 use asset::Asset;
 use common::GenericError;
@@ -10,6 +11,8 @@ use db::{models::Link, DbPool};
 use axum::{body::Body, extract::Path, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use mime_guess::from_path;
 use std::net::SocketAddr;
+
+
 
 async fn asset_handler(uri: axum::http::Uri) -> Response {
     let path = uri.clone().to_string().replace("/assets/", "");
