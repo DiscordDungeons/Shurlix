@@ -24,3 +24,6 @@ url = "2.5.2"
 lazy_static = "1.5.0"
 argon2 = "0.5.3"
 email_address = "0.2.9"
+jsonwebtoken = "=9.3.0"
+axum-extra = { version = "0.9.4", features = ["cookie"] }
+time = "0.3.36"

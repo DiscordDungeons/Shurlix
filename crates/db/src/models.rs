@@ -73,9 +73,8 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password_hash: String,
-    pub password_salt: String,
-    pub created_at: NaiveDateTime,
     pub verified_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>
 }
 
@@ -90,20 +89,20 @@ impl User {
         count > 0
     }
 
-    // /// Gets a user by username
-    // pub fn get_by_username(username: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
-    //     users::table.filter(
-    //         users::username.eq(username)
-    //     )
-    //     .load::<User>(conn)
-    // }
+    /// Gets a user by username
+    pub fn get_by_username(username: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+        users::table.filter(
+            users::username.eq(username)
+        )
+        .load::<User>(conn)
+    }
 
-    // pub fn get_by_email(email: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
-    //     users::table.filter(
-    //         users::email.eq(email)
-    //     )
-    //     .load::<User>(conn)
-    // }
+    pub fn get_by_email(email: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+        users::table.filter(
+            users::email.eq(email)
+        )
+        .load::<User>(conn)
+    }
 }
 
 
@@ -112,7 +111,6 @@ impl User {
 pub struct NewUser {
     pub username: String,
     pub password_hash: String,
-    pub password_salt: String,
     pub email: String,
 }
 

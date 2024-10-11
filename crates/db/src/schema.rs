@@ -23,7 +23,6 @@ diesel::table! {
         #[max_length = 255]
         email -> Varchar,
         password_hash -> Text,
-        password_salt -> Text,
         verified_at -> Nullable<Timestamp>,
         created_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,

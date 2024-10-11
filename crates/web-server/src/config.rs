@@ -6,6 +6,7 @@ pub struct Config {
     pub database_url: String,
     pub shortened_link_length: usize,
     pub allow_anonymous_shorten: bool,
+    pub jwt_secret: String,
 }
 
 impl Config {
@@ -17,6 +18,7 @@ impl Config {
 
         let database_url = std::env::var("DATABASE_URL").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), "DATABASE_URL".yellow(), "not set in .env"));
         let shortened_link_length = std::env::var("SHORTENED_LINK_LENGTH").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "SHORTENED_LINK_LENGTH".yellow(), "not set in .env"));
+        let jwt_secret = std::env::var("JWT_SECRET").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "JWT_SECRET".yellow(), "not set in .env"));
 
         let shortened_link_length = match shortened_link_length.parse::<usize>() {
             Ok(n) => n,
@@ -33,7 +35,8 @@ impl Config {
         Config {
             database_url,
             shortened_link_length,
-            allow_anonymous_shorten
+            allow_anonymous_shorten,
+            jwt_secret
         }
     }
 }

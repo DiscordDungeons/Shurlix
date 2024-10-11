@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, Json};
+use axum_extra::extract::CookieJar;
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -17,3 +18,4 @@ impl GenericMessage {
 }
 
 pub type APIResponse<T> = Result<(StatusCode, Json<T>), (StatusCode, Json<GenericMessage>)>;
+pub type CookiedAPIResponse<T> = Result<(CookieJar, Json<T>), (StatusCode, Json<GenericMessage>)>;
