@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use chrono::NaiveDateTime;
 use serde::Serialize;
 
-use crate::{schema::links, DbConnection};
+use crate::{schema::{links, users}, DbConnection};
 
 #[derive(Debug, Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::links)]
@@ -66,15 +66,62 @@ impl NewLink {
     }
 }
 
-#[derive(Queryable, Selectable)]
+#[derive(Debug, Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::users)]
 pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
     pub password_hash: String,
-    pub password_salt: i32,
+    pub password_salt: String,
     pub created_at: NaiveDateTime,
     pub verified_at: Option<NaiveDateTime>,
     pub deleted_at: Option<NaiveDateTime>
+}
+
+impl User {
+    pub fn username_exists(username: &str, conn: &mut DbConnection) -> bool {
+        let count = users::table.filter(users::username.ilike(username)).count().get_result::<i64>(conn).unwrap_or(0);
+        count > 0
+    }
+
+    pub fn email_exists(email: &str, conn: &mut DbConnection) -> bool {
+        let count = users::table.filter(users::email.ilike(email)).count().get_result::<i64>(conn).unwrap_or(0);
+        count > 0
+    }
+
+    // /// Gets a user by username
+    // pub fn get_by_username(username: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+    //     users::table.filter(
+    //         users::username.eq(username)
+    //     )
+    //     .load::<User>(conn)
+    // }
+
+    // pub fn get_by_email(email: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+    //     users::table.filter(
+    //         users::email.eq(email)
+    //     )
+    //     .load::<User>(conn)
+    // }
+}
+
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = crate::schema::users)]
+pub struct NewUser {
+    pub username: String,
+    pub password_hash: String,
+    pub password_salt: String,
+    pub email: String,
+}
+
+impl NewUser {
+    pub fn insert(&self, conn: &mut DbConnection) -> User {
+        diesel::insert_into(users::table)
+            .values(self)
+            .returning(User::as_returning())
+            .get_result(conn)
+            .expect("Error saving new user")
+    }
 }

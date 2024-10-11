@@ -105,9 +105,7 @@ async fn delete_link(
 
 // Starts at /api/link
 pub fn links_router() -> Router {
-    let links_router = Router::new()
+    Router::new()
         .route("/shorten", post(create_link))
-        .route("/:slug", delete(delete_link));
-
-    links_router
+        .route("/:slug", delete(delete_link))
 }
