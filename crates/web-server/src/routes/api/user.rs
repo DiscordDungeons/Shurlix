@@ -1,10 +1,9 @@
-use axum::{http::StatusCode, routing::post, Extension, Json, Router};
+use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router};
 use db::{models::{NewUser, User}, DbPool};
 use email_address::EmailAddress;
-use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
-use axum_extra::extract::cookie::{Cookie, CookieJar,};
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 
 use argon2::{
     password_hash::{
@@ -14,7 +13,7 @@ use argon2::{
     Argon2
 };
 
-use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config};
+use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, util::jwt::encode_user_token};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -37,14 +36,7 @@ struct RegisteredUser {
     email: String,
 }
 
-#[derive(Serialize)]
-struct JwtClaims {
-    sub: String, // User ID
-    // Other claims if needed
-}
-
-#[derive(Serialize)]
-struct LoginResponse {
+#[derive(Serialize)]struct LoginResponse {
 	token: String
 }
 
@@ -131,10 +123,7 @@ async fn login_user(
     // Verify the password
     match argon2.verify_password(&payload.password.as_bytes(), &parsed_hash) {
         Ok(_) => {
-			let claims = JwtClaims {
-                sub: user.id.to_string(),
-            };
-            let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(config.jwt_secret.as_bytes())).unwrap();
+			let token = encode_user_token(user.id, config.jwt_secret.as_bytes());
 
 			let cookie = Cookie::build(("auth_token", token.clone()))
 				.http_only(true) // Prevent JavaScript access
@@ -154,7 +143,11 @@ async fn login_user(
     }
 }
 
-async fn user_profile() -> APIResponse<GenericMessage> {
+async fn user_profile(
+    AuthedUser(auth): AuthedUser,
+) -> APIResponse<GenericMessage> {
+	println!("got Auth: {:#?}", auth);
+
 	Ok((StatusCode::OK, GenericMessage::new("profile")))
 }
 

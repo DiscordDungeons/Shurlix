@@ -4,13 +4,15 @@ mod routes;
 mod common;
 mod asset;
 mod constants;
+mod extensions;
 
 use asset::Asset;
 use common::GenericMessage;
 use db::{models::Link, DbPool};
-use axum::{body::Body, extract::Path, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
+use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use mime_guess::from_path;
 use std::net::SocketAddr;
+
 
 
 
@@ -44,6 +46,7 @@ async fn main() {
     let config = config::Config::new();
 
     let pool = db::create_pool(&config.database_url);
+
 
     // build our application with a route
     let app = Router::new()

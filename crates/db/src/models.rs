@@ -66,7 +66,7 @@ impl NewLink {
     }
 }
 
-#[derive(Debug, Queryable, Selectable, Serialize)]
+#[derive(Debug, Queryable, Selectable, Serialize, Clone)]
 #[diesel(table_name = crate::schema::users)]
 pub struct User {
     pub id: i32,
@@ -100,6 +100,13 @@ impl User {
     pub fn get_by_email(email: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
         users::table.filter(
             users::email.eq(email)
+        )
+        .load::<User>(conn)
+    }
+
+    pub fn get_by_id(id: &i32, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+        users::table.filter(
+            users::id.eq(id)
         )
         .load::<User>(conn)
     }

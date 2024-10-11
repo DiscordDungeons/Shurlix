@@ -27,3 +27,4 @@ email_address = "0.2.9"
 jsonwebtoken = "=9.3.0"
 axum-extra = { version = "0.9.4", features = ["cookie"] }
 time = "0.3.36"
+log = "0.4.22"

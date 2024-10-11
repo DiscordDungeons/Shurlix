@@ -1,3 +1,5 @@
+pub mod jwt;
+
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use url::Url;
@@ -18,10 +20,6 @@ pub fn is_url(url: &str) -> bool {
         Ok(_) => true,
         Err(_) => false,
     }
-}
-
-pub fn contains_any(input: &str, patterns: &[String]) -> bool {
-    patterns.iter().any(|pattern| input.contains(pattern))
 }
 
 /// Checks if the input starts with any of the given patterns

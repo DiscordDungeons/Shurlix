@@ -53,9 +53,6 @@ async fn create_link(
             return Err((StatusCode::CONFLICT, GenericMessage::new("Slug already exists.")));
         }
     }
-
-    println!("Received link: {:?}", payload);
-
     let slug = util::generate_unique_string(config.shortened_link_length);
 
     let new_link = NewLink {
