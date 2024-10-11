@@ -39,6 +39,10 @@ impl Link {
 
         links
     }
+
+    pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::delete(links::table.filter(links::id.eq(self.id))).execute(conn)
+    }
 }
 
 #[derive(Debug, Insertable)]

@@ -1,12 +1,12 @@
-use axum::Json;
+use axum::{http::StatusCode, Json};
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
-pub struct GenericError {
+pub struct GenericMessage {
     message: String,
 }
 
-impl GenericError {
+impl GenericMessage {
     pub fn new(message: &str) -> Json<Self> {
         Json(Self { message: message.to_string() })
     }
@@ -15,3 +15,5 @@ impl GenericError {
         Json(Self { message: message })
     }
 }
+
+pub type APIResponse<T> = Result<(StatusCode, Json<T>), (StatusCode, Json<GenericMessage>)>;

@@ -21,5 +21,5 @@ Simple URL Shortener service
                 - [ ] As admin
                 - [ ] As user
         - [ ] Delete links
-            - [ ] As user
+            - [x] As user
             - [ ] As admin

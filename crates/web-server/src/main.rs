@@ -6,7 +6,7 @@ mod asset;
 mod constants;
 
 use asset::Asset;
-use common::GenericError;
+use common::GenericMessage;
 use db::{models::Link, DbPool};
 use axum::{body::Body, extract::Path, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use mime_guess::from_path;
@@ -70,19 +70,19 @@ async fn handle_slug(
     Path(slug): Path<String>,
 ) -> impl IntoResponse {
     let conn = &mut pool.get().map_err(|e| {
-        (StatusCode::INTERNAL_SERVER_ERROR, GenericError::from_string(e.to_string()))
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
     let existing_link = Link::get_by_slug(&slug, conn);
 
     if existing_link.is_err() {
-        return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericError::new("Internal Server Error")));
+        return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")));
     }
 
     let existing_link = existing_link.unwrap();
 
     if existing_link.len() == 0 {
-        return Err((StatusCode::NOT_FOUND, GenericError::new("Slug not found.")));
+        return Err((StatusCode::NOT_FOUND, GenericMessage::new("Slug not found.")));
     }
 
     let link = existing_link.first().unwrap();
