@@ -8,7 +8,10 @@ Simple URL Shortener service
 - [ ] User interface
     - [ ] Login / Create user
     - [ ] Enable / Disable user creation
-- [ ] Enable / Disable anonymous shortening
+    - [ ] Dashboard
+        - [ ] Links dashboard (overview, deletion, etc)
+        - [ ] User settings
+- [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links
         - [x] Create links
