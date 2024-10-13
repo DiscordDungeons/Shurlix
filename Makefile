@@ -12,3 +12,5 @@ watch-frontend:
 	cd ./crates/frontend && npm run dev
 dev:
 	make watch-frontend & make watch
+install:
+	cd ./crates/frontend && npm i

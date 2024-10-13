@@ -70,11 +70,18 @@ async fn create_link(
 }
 
 async fn delete_link(
+    Extension(config): Extension<Config>,
     Extension(pool): Extension<DbPool>,
+    AuthedUser(user): AuthedUser,
     Path(slug): Path<String>,
 ) -> APIResponse<GenericMessage> {
     // TODO: Check link ownership
 
+    let owner_id: Option<i32> = user.map(|u| u.id);
+
+    if owner_id.is_none() {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
 
     let conn = &mut pool.get().map_err(|e| {
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
@@ -93,6 +100,10 @@ async fn delete_link(
     }
     
     let existing_link = existing_link.first().unwrap();
+
+    if existing_link.owner_id != owner_id {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
 
     return match existing_link.delete(conn) {
         Ok(_) => Ok((StatusCode::GONE, GenericMessage::new("Slug deleted."))),
