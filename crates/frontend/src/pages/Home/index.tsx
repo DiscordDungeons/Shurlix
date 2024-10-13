@@ -1,8 +1,11 @@
-import { useState } from 'preact/hooks'
+import { useContext, useState } from 'preact/hooks'
 import './style.css'
 import {Input} from '../../components/Input'
+import { ConfigContext } from '../../context/ConfigContext'
 
 export const Home = () => {
+	const configContext = useContext(ConfigContext)
+
 	const [ longLink, setLongLink ] = useState('')
 	const [ shortLink, setShortLink ] = useState('')
 	const [ canCreateLink, setCanCreateLink ] = useState(false)
@@ -44,6 +47,16 @@ export const Home = () => {
 		} catch (err) {
 			console.error('Failed to copy:', err);
 		}
+	}
+
+	if (!configContext.allowCreateAnonymousLinks) {
+		return (
+			<div class="home h-full w-full flex items-center justify-center dark:bg-gray-600">
+				<div>
+					<h1 class="text-9xl font-sans text-violet-600 font-bold my-8 dark:text-rose-400">Shurlix</h1>
+				</div>
+			</div>
+		)
 	}
 
 	return (

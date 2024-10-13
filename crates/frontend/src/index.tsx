@@ -5,14 +5,18 @@ import { Home } from './pages/Home/index.jsx'
 import { NotFound } from './pages/_404.jsx'
 import './style.scss'
 
+import {ConfigContextProvider} from './context/ConfigContext'
+
 export function App() {
 	return (
-		<LocationProvider>
-			<Router>
-				<Route path="/" component={Home} />
-				<Route default component={NotFound} />
-			</Router>
-		</LocationProvider>
+		<ConfigContextProvider>
+			<LocationProvider>
+				<Router>
+					<Route path="/" component={Home} />
+					<Route default component={NotFound} />
+				</Router>
+			</LocationProvider>
+		</ConfigContextProvider>
 	)
 }
 
