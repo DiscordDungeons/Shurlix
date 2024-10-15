@@ -6,16 +6,21 @@ import { NotFound } from './pages/_404.jsx'
 import './style.scss'
 
 import {ConfigContextProvider} from './context/ConfigContext'
+import { LoginContextProvider } from './context/LoginContext.js'
+import { LoginPage } from './pages/Login/index.js'
 
 export function App() {
 	return (
 		<ConfigContextProvider>
-			<LocationProvider>
-				<Router>
-					<Route path="/" component={Home} />
-					<Route default component={NotFound} />
-				</Router>
-			</LocationProvider>
+			<LoginContextProvider>
+				<LocationProvider>
+					<Router>
+						<Route path="/" component={Home} />
+						<Route path="/dash/login" component={LoginPage} />
+						<Route default component={NotFound} />
+					</Router>
+				</LocationProvider>
+			</LoginContextProvider>
 		</ConfigContextProvider>
 	)
 }

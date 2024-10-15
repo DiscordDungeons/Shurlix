@@ -78,7 +78,35 @@ pub struct User {
     pub deleted_at: Option<NaiveDateTime>
 }
 
+#[derive(Debug, Serialize)]
+pub struct SanitizedUser {
+    pub id: i32,
+    pub username: String,
+    pub email: String,  
+    pub verified_at: Option<NaiveDateTime>,
+    pub created_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>
+}
+
+impl From<&User> for SanitizedUser {
+    fn from(user: &User) -> Self {
+        Self {
+            id: user.id,
+            username: user.username.clone(),
+            email: user.email.clone(),  
+            verified_at: user.verified_at,
+            created_at: user.created_at,
+            deleted_at: user.deleted_at
+        }
+    }
+}
+
+
 impl User {
+    pub fn sanitize(&self) -> SanitizedUser {
+        SanitizedUser::from(self)
+    }
+
     pub fn username_exists(username: &str, conn: &mut DbConnection) -> bool {
         let count = users::table.filter(users::username.ilike(username)).count().get_result::<i64>(conn).unwrap_or(0);
         count > 0

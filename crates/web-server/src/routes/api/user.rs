@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router};
-use db::{models::{NewUser, User}, DbPool};
+use db::{models::{NewUser, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
@@ -24,7 +24,7 @@ struct RegisterRequest {
 
 #[derive(Deserialize)]
 struct LoginRequest {
-    username: String,
+    email: String,
     password: String,
 }
 
@@ -36,8 +36,10 @@ struct RegisteredUser {
     email: String,
 }
 
-#[derive(Serialize)]struct LoginResponse {
-	token: String
+#[derive(Serialize)]
+struct LoginResponse {
+	token: String,
+	user: SanitizedUser,
 }
 
 async fn register_user(
@@ -102,7 +104,7 @@ async fn login_user(
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
-	let users = match User::get_by_username(&payload.username, conn) {
+	let users = match User::get_by_email(&payload.email, conn) {
 		Ok(users) => users,
 		Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))
 	};
@@ -136,7 +138,8 @@ async fn login_user(
 			let jar2 = jar.add(cookie);
 
             Ok((jar2, Json(LoginResponse {
-				token
+				token,
+				user: user.sanitize(),
 			})))
 		}
         Err(_) => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials.")))
