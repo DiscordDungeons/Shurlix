@@ -8,6 +8,7 @@ import './style.scss'
 import {ConfigContextProvider} from './context/ConfigContext'
 import { LoginContextProvider } from './context/LoginContext.js'
 import { LoginPage } from './pages/Login/index.js'
+import { LinkList } from './pages/Dash/Links.js'
 
 export function App() {
 	return (
@@ -17,6 +18,7 @@ export function App() {
 					<Router>
 						<Route path="/" component={Home} />
 						<Route path="/dash/login" component={LoginPage} />
+						<Route path="/dash/links" component={LinkList} />
 						<Route default component={NotFound} />
 					</Router>
 				</LocationProvider>
