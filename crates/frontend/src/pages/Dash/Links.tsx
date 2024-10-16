@@ -1,9 +1,12 @@
+import { RequireLogin } from "../../components/HoC/RequireLogin"
 import { Dashboard } from "../../components/Layout/Dashboard/Dashboard"
 
-export const LinkList = () => {
+const InternalLinkList = () => {
 	return (
 		<Dashboard>
 			Hello World
 		</Dashboard>
 	)
 }
+
+export const LinkList = RequireLogin(InternalLinkList)

@@ -147,11 +147,12 @@ async fn login_user(
 }
 
 async fn user_profile(
-    AuthedUser(auth): AuthedUser,
-) -> APIResponse<GenericMessage> {
-	println!("got Auth: {:#?}", auth);
-
-	Ok((StatusCode::OK, GenericMessage::new("profile")))
+    AuthedUser(user): AuthedUser,
+) -> APIResponse<SanitizedUser> {
+	match user {
+		None => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials."))),
+		Some(user) => Ok((StatusCode::OK, Json(SanitizedUser::from(&user))))
+	}
 }
 
 // Starts at /api/user

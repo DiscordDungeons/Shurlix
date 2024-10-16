@@ -1,6 +1,6 @@
 import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
-import { simpleDataPost } from './contextUtils'
+import { simpleDataFetch, simpleDataPost } from './contextUtils'
 
 type User = {
     id: number,
@@ -19,6 +19,7 @@ type LoginResponse = {
 export type ILoginContext = {
 	user: User | null,
 	loginUser: (email: string, password: string) => Promise<void>,
+	fetchMe: () => Promise<void>,
 }
 
 export const LoginContext = createContext<ILoginContext>(null)
@@ -31,6 +32,14 @@ export const LoginContextProvider = ({
 	const loginUser = async (email: string, password: string) => {
 		simpleDataPost<LoginResponse>("/api/user/login", { email, password }, (data) => {
 			setUser(data.user)
+			localStorage.setItem('isLoggedIn', 'true');
+		})
+	}
+
+	const fetchMe = async () => {
+		console.log("get me")
+		simpleDataFetch<User>("/api/user/me", data => {
+			setUser(data)
 		})
 	}
 
@@ -40,6 +49,7 @@ export const LoginContextProvider = ({
 			value={{
 				user,
 				loginUser,
+				fetchMe,
 			}}
 		>
 			{children}

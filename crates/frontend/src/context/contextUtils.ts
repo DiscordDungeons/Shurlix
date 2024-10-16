@@ -1,4 +1,4 @@
-export const simpleDataFetch = async (url: string, setFn: (data: any) => void): Promise<void> => {
+export const simpleDataFetch = async <T>(url: string, setFn: (data: T) => void): Promise<void> => {
 	const request = await fetch(url, {
 		method: 'GET',
 		headers: {
