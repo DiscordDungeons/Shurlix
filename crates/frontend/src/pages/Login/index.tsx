@@ -1,9 +1,11 @@
 import { useContext, useState } from 'preact/hooks'
 import { LoginContext } from '../../context/LoginContext'
+import { useLocation } from 'preact-iso'
 
 
 export const LoginPage = () => {
-	const {loginUser, user} = useContext(LoginContext)
+	const { loginUser, user, loginRedirectMessage } = useContext(LoginContext)
+	const { route } = useLocation()
 
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
@@ -12,11 +14,17 @@ export const LoginPage = () => {
 		await loginUser(email, password)
 	}
 
+	if (user) {
+		route("/dash/links")
+	}
 
 	return (
-		<div class="bg-gray-50 dark:bg-gray-900 flex justify-center items-center h-screen">
-			{user && (
-				<pre>{JSON.stringify(user, null, 2)}</pre>
+		<div class="bg-gray-50 dark:bg-gray-900 flex justify-center items-center h-screen flex-col">
+			{/* Message Box */}
+			{loginRedirectMessage && (
+				<div class="mb-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded w-full max-w-md">
+					{loginRedirectMessage}
+				</div>
 			)}
 
 			<div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">

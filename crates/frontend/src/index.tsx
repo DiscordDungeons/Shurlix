@@ -12,18 +12,18 @@ import { LinkList } from './pages/Dash/Links.js'
 
 export function App() {
 	return (
-		<ConfigContextProvider>
-			<LoginContextProvider>
-				<LocationProvider>
+		<LocationProvider>
+			<ConfigContextProvider>
+				<LoginContextProvider>
 					<Router>
 						<Route path="/" component={Home} />
 						<Route path="/dash/login" component={LoginPage} />
 						<Route path="/dash/links" component={LinkList} />
 						<Route default component={NotFound} />
 					</Router>
-				</LocationProvider>
-			</LoginContextProvider>
-		</ConfigContextProvider>
+				</LoginContextProvider>
+			</ConfigContextProvider>
+		</LocationProvider>
 	)
 }
 

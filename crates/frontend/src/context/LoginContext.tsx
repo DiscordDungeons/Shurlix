@@ -1,6 +1,7 @@
 import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
 import { simpleDataFetch, simpleDataPost } from './contextUtils'
+import { useLocation } from 'preact-iso'
 
 type User = {
     id: number,
@@ -16,8 +17,12 @@ type LoginResponse = {
 	user: User,
 }
 
+
 export type ILoginContext = {
 	user: User | null,
+	error: string | null,
+	loginRedirectMessage: string | null,
+	loginRedirectTo: string | null,
 	loginUser: (email: string, password: string) => Promise<void>,
 	fetchMe: () => Promise<void>,
 }
@@ -28,11 +33,24 @@ export const LoginContextProvider = ({
 	children,
 }) => {
 	const [user, setUser] = useState<User | null>(null)
+	const [error, setError] = useState<string | null>(null)
+	const [loginRedirectMessage, setLoginRedirectMessage] = useState<string | null>(null)
+	const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null)
+
+	const { route, path } = useLocation()
 
 	const loginUser = async (email: string, password: string) => {
 		simpleDataPost<LoginResponse>("/api/user/login", { email, password }, (data) => {
+			setError(null)
+			setLoginRedirectMessage(null)
+
 			setUser(data.user)
-			localStorage.setItem('isLoggedIn', 'true');
+			localStorage.setItem('isLoggedIn', 'true')
+
+			if (loginRedirectTo) {
+				route(loginRedirectTo)
+				setLoginRedirectTo(null)
+			}
 		})
 	}
 
@@ -40,6 +58,16 @@ export const LoginContextProvider = ({
 		console.log("get me")
 		simpleDataFetch<User>("/api/user/me", data => {
 			setUser(data)
+		}).catch(e => {
+			setError(e.message)
+
+			if (e.statusCode === 401) {
+				setLoginRedirectMessage("Please login again.")
+				setLoginRedirectTo(path)
+				// localStorage.setItem('isLoggedIn', 'false')
+				
+				route('/dash/login')
+			}
 		})
 	}
 
@@ -48,6 +76,9 @@ export const LoginContextProvider = ({
 		<LoginContext.Provider
 			value={{
 				user,
+				error,
+				loginRedirectMessage,
+				loginRedirectTo,
 				loginUser,
 				fetchMe,
 			}}
