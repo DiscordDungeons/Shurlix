@@ -10,12 +10,16 @@ export const ConfigContext = createContext<IConfigContext>({
 	allowCreateAnonymousLinks: false,
 })
 
+type ConfigResponse = {
+	allow_anonymous_shorten: boolean,
+}
+
 export const ConfigContextProvider = ({
 	children,
 }) => {
 	const [allowCreateAnonymousLinks, setAllowCreateAnonymousLinks] = useState(false)
 
-	simpleDataFetch("/api/config", (data) => {
+	simpleDataFetch<ConfigResponse>("/api/config", (data) => {
 		setAllowCreateAnonymousLinks(data.allow_anonymous_shorten)
 	})
 

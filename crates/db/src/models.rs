@@ -40,6 +40,13 @@ impl Link {
         links
     }
 
+    pub fn get_by_owner_id(owner: i32, conn: &mut DbConnection) -> Result<Vec<Link>, diesel::result::Error> {
+        links::table.filter(
+            links::owner_id.eq(owner)
+        )
+        .load::<Link>(conn)
+    }
+
     pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
         diesel::delete(links::table.filter(links::id.eq(self.id))).execute(conn)
     }

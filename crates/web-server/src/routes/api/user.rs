@@ -1,5 +1,5 @@
 use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router};
-use db::{models::{NewUser, SanitizedUser, User}, DbPool};
+use db::{models::{Link, NewUser, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
@@ -155,10 +155,33 @@ async fn user_profile(
 	}
 }
 
+async fn my_links(
+	AuthedUser(user): AuthedUser,
+	Extension(pool): Extension<DbPool>,
+) -> APIResponse<Vec<Link>> {
+	let owner_id: Option<i32> = user.map(|u| u.id);
+
+    if owner_id.is_none() {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
+
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	let links = Link::get_by_owner_id(owner_id.unwrap(), conn);
+
+	match links {
+		Ok(links) => Ok((StatusCode::OK, Json(links))),
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
+	}
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
         .route("/register", post(register_user))
         .route("/login", post(login_user))
 		.route("/me", get(user_profile))
+		.route("/me/links", get(my_links))
 }

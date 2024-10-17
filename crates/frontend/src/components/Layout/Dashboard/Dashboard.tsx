@@ -16,7 +16,7 @@ export const Dashboard = ({
 	const { path } = useLocation()
 
 	return (
-		<div class="bg-gray-50 dark:bg-gray-900 flex h-screen">
+		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none">
 			{/* Sidebar */}
 			<aside class="w-64 bg-gray-800 text-white flex-shrink-0">
 				<div class="p-4 font-bold text-xl">Shurlix</div>
