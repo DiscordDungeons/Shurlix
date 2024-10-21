@@ -77,7 +77,8 @@ impl From<Entropy> for CheckPasswordResponse {
 					suggestion: feedback.suggestions().to_vec(),
 					suggestion_string: Some(feedback.suggestions().iter().map(|s| {
 						format!("{}", s)
-					}).collect()),
+					}).collect::<Vec<_>>()
+					.join(" "))
 				}),
 				None => None,
 			}
