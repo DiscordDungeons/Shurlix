@@ -46,6 +46,7 @@ export const ApiContextProvider = ({
 
 	const getMyLinks = async () => {
 		simpleDataFetch<Link[]>('/api/user/me/links', data => {
+			setError(null)
 			setLinks(data)
 		})
 	}
@@ -56,6 +57,7 @@ export const ApiContextProvider = ({
 			link: url,
 			custom_slug: customSlug, 
 		}, (data) => {
+			setError(null)
 			const newLinks = [ data, ...links ]
 			setLinkCreationState(LinkCreationState.CREATED)
 

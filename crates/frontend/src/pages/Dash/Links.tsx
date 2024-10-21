@@ -3,14 +3,17 @@ import { RequireLogin } from '../../components/HoC/RequireLogin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
 import { ApiContext, LinkCreationState } from '../../context/ApiContext'
 import { Modal } from '../../components/Modal'
+import { isValidUrl } from '../../util/validator'
 
 const InternalLinkList = () => {
-	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState } = useContext(ApiContext)
+	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState, error } = useContext(ApiContext)
 	const createLinkForm = useRef<HTMLFormElement>(null)
 	const [ isModalOpen, setIsModalOpen ] = useState(false)
 
 	const [ url, setURL ] = useState<string>(null)
 	const [ customSlug, setCustomSlug ] = useState<string>(null)
+
+	const [ formError, setFormError ] = useState<string>(null)
 
 
 	if (!links) {
@@ -24,27 +27,30 @@ const InternalLinkList = () => {
 	}
 
 	const onCreateLink = async () => {
+		resetLinkCreationState()
 		console.log('is valid?', createLinkForm.current.checkValidity())
-		if (!createLinkForm.current.checkValidity()) return
+		setFormError(null)
+
+		if (!createLinkForm.current.checkValidity()) {
+			if (!isValidUrl(url)) {
+				setFormError('Please enter a valid URL.')
+			}
+			return
+		}
 
 		await createLink(url, customSlug)
 	}
 
 	const onCloseModal = () => {
+		setFormError(null)
 		setIsModalOpen(false)
 		resetLinkCreationState()
 	}
 
 	return (
 		<Dashboard>
-			<Modal open={isModalOpen && linkCreationState == LinkCreationState.CREATING} title="Creating link" onClose={onCloseModal}>
-				Creating link.
-			</Modal>
-			<Modal open={isModalOpen && linkCreationState == LinkCreationState.CREATED} title="Created link" onClose={onCloseModal}>
-				Created link!
-			</Modal>
 			<Modal
-				open={isModalOpen && linkCreationState === LinkCreationState.NONE}
+				open={isModalOpen }
 				title="Create Link"
 				onClose={onCloseModal}
 				actionButton={(
@@ -56,6 +62,30 @@ const InternalLinkList = () => {
 					</button>
 				)}
 			>
+				{linkCreationState == LinkCreationState.CREATING && (
+					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md">
+						Creating Link...
+					</div>
+				)}
+
+				{linkCreationState == LinkCreationState.CREATED && (
+					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
+						Created Link!
+					</div>
+				)}
+
+				{error && (
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+						{error}
+					</div>
+				)}
+
+				{formError && (
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+						{formError}
+					</div>
+				)}
+
 				<form
 					ref={createLinkForm}
 					onSubmit={(e) => {
@@ -73,6 +103,7 @@ const InternalLinkList = () => {
 							placeholder="example.com"
 							value={url}
 							onChange={e => setURL(e.target.value)}
+							validationMessage="Please enter a url"
 						/>
 					</div>
 					<div>
