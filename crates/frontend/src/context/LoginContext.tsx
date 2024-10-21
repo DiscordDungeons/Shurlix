@@ -2,6 +2,8 @@ import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
 import { APIError, simpleDataFetch, simpleDataPost } from './contextUtils'
 import { useLocation } from 'preact-iso'
+import { deleteCookie } from '../util/cookies'
+import { toast } from 'react-toastify'
 
 type User = {
     id: number,
@@ -24,6 +26,7 @@ export type ILoginContext = {
 	loginRedirectMessage: string | null,
 	loginRedirectTo: string | null,
 	loginUser: (email: string, password: string) => Promise<void>,
+	logoutUser: () => void,
 	fetchMe: () => Promise<void>,
 }
 
@@ -66,10 +69,25 @@ export const LoginContextProvider = ({
 			if (e.statusCode === 401) {
 				setLoginRedirectMessage('Please login again.')
 				setLoginRedirectTo(path)
-				// localStorage.setItem('isLoggedIn', 'false')
+				localStorage.setItem('isLoggedIn', 'false')
 				
 				route('/dash/login')
 			}
+		})
+	}
+
+	const logoutUser = async () => {
+		setError(null)
+		setUser(null)
+
+		await simpleDataPost('/api/user/logout', {}, () => {
+			localStorage.setItem('isLoggedIn', 'false')
+			setLoginRedirectMessage('Logged out.')
+
+			route('/dash/login')
+		}).catch(e => {
+			toast.error('Logout failed?')
+			console.error(e)
 		})
 	}
 
@@ -82,6 +100,7 @@ export const LoginContextProvider = ({
 				loginRedirectMessage,
 				loginRedirectTo,
 				loginUser,
+				logoutUser,
 				fetchMe,
 			}}
 		>

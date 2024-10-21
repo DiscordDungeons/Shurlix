@@ -15,17 +15,10 @@ type Link = {
 };
 
 export enum LinkCreationState {
-	NONE,
-	CREATING,
-	CREATED,
-	FAILED,
-}
-
-export enum LinkDeletionState {
-	NONE,
-	DELETING,
-	DELETED,
-	FAILED,
+	NONE = 'NONE',
+	CREATING = 'CREATING',
+	CREATED = 'CREATED',
+	FAILED = 'FAILED',
 }
 
 export type IApiContext = {

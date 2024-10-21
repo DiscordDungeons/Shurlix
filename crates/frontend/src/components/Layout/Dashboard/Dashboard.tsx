@@ -13,7 +13,7 @@ type Props = {
 export const Dashboard = ({
 	children,
 }: Props) => {
-	const { user } = useContext(LoginContext)
+	const { user, logoutUser } = useContext(LoginContext)
 
 	return (
 		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none">
@@ -25,21 +25,16 @@ export const Dashboard = ({
 					<ul class="space-y-4">
 						<li>
 							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
-								Home
-							</a>
-						</li>
-						<li>
-							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
 								Links
 							</a>
 						</li>
-						<li>
+						{/* <li>
 							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
 								Settings
 							</a>
-						</li>
+						</li> */}
 						<li>
-							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
+							<a href="#" class="block px-4 py-2 hover:bg-gray-700" onClick={logoutUser}>
 								Logout
 							</a>
 						</li>

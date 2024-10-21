@@ -177,11 +177,29 @@ async fn my_links(
 	}
 }
 
+async fn logout_user(
+	jar: CookieJar,
+) -> CookiedAPIResponse<GenericMessage> {
+	let cookie = Cookie::build(("auth_token", "deleted"))
+		.http_only(true) // Prevent JavaScript access
+		.secure(false) // Only send over HTTPS
+		.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
+		.path("/") // Path for which the cookie is valid
+		.max_age(time::Duration::hours(1)) // Set cookie expiration
+		.expires(time::OffsetDateTime::from_unix_timestamp(0).unwrap())
+		.build();
+
+	let jar2 = jar.add(cookie);
+
+	Ok((jar2, GenericMessage::new("Logged out")))
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
         .route("/register", post(register_user))
         .route("/login", post(login_user))
+        .route("/logout", post(logout_user))
 		.route("/me", get(user_profile))
 		.route("/me/links", get(my_links))
 }

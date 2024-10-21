@@ -23,7 +23,13 @@ export const LoginPage = () => {
 	}
 
 	if (user) {
+		localStorage.setItem('isLoggedIn', 'true')
 		route('/dash/links')
+		return (
+			<div>
+				Logging in
+			</div>
+		)
 	}
 
 	return (

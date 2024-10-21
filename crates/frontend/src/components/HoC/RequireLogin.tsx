@@ -6,7 +6,7 @@ import { useLocation } from 'preact-iso'
 export const RequireLogin = (WrappedComponent: any) => {
 	// const { route } = useLocation()
 
-	const isLoggedIn = localStorage.getItem('isLoggedIn') === "true"
+	const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
 
 	if (!isLoggedIn) {
 		const newComponent = () => {
