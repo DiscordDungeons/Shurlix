@@ -1,6 +1,7 @@
 import { createContext } from 'preact'
-import { Dispatch, StateUpdater, useState } from 'preact/hooks'
-import { APIError, simpleDataFetch, simpleDataPost } from './contextUtils'
+import { StateUpdater, useState } from 'preact/hooks'
+import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
+import { toast } from 'react-toastify'
 
 type Link = {
     id: number;
@@ -20,14 +21,23 @@ export enum LinkCreationState {
 	FAILED,
 }
 
+export enum LinkDeletionState {
+	NONE,
+	DELETING,
+	DELETED,
+	FAILED,
+}
+
 export type IApiContext = {
-	links: StateUpdater<Link[] | null>,
+	links: Link[] | null,
 	linkCreationState: StateUpdater<LinkCreationState>,
 	error: string | null,
 	getMyLinks: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	createLink: (url: string, customSlug?: string) => Promise<void>,
 	resetLinkCreationState: () => void,
+	// eslint-disable-next-line no-unused-vars
+	deleteLink: (slug: string) => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -68,6 +78,21 @@ export const ApiContextProvider = ({
 		})
 	}
 
+	const deleteLink = async (slug: string) => {
+		await simpleDelete(`/api/link/${slug}`, () => {
+			const linkClone = [...links]
+
+			const newLinks = linkClone.filter(link => link.slug !== slug)
+
+			setLinks(newLinks)
+
+			toast.success('Link deleted.')
+			setError(null)
+		}).catch((e: APIError) => {
+			toast.error(e.message)
+		})
+	} 
+
 
 	return (
 		<ApiContext.Provider
@@ -76,6 +101,7 @@ export const ApiContextProvider = ({
 				getMyLinks,
 				createLink,
 				resetLinkCreationState,
+				deleteLink,
 				linkCreationState,
 				error,
 			}}

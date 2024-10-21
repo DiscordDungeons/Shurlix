@@ -48,3 +48,20 @@ export const simpleDataPost = async <T>(
 	}
 
 }
+
+export const simpleDelete = async <T>(url: string, setFn: (data: T) => void): Promise<void> => {
+	const request = await fetch(url, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	const data = await request.json()
+
+	if (request.ok) {
+		setFn(data)
+	} else {
+		throw new APIError(data.message, request.status)
+	}
+}

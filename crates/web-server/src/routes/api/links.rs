@@ -106,7 +106,7 @@ async fn delete_link(
     }
 
     return match existing_link.delete(conn) {
-        Ok(_) => Ok((StatusCode::GONE, GenericMessage::new("Slug deleted."))),
+        Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Slug deleted."))),
         Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))
     }
 

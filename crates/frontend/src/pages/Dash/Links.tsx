@@ -6,7 +6,7 @@ import { Modal } from '../../components/Modal'
 import { isValidUrl } from '../../util/validator'
 
 const InternalLinkList = () => {
-	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState, error } = useContext(ApiContext)
+	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState, error, deleteLink } = useContext(ApiContext)
 	const createLinkForm = useRef<HTMLFormElement>(null)
 	const [ isModalOpen, setIsModalOpen ] = useState(false)
 
@@ -14,6 +14,9 @@ const InternalLinkList = () => {
 	const [ customSlug, setCustomSlug ] = useState<string>(null)
 
 	const [ formError, setFormError ] = useState<string>(null)
+
+	const [ deleteLinkSlug, setDeleteLinkSlug ] = useState<string>(null)
+	const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState<boolean>(false)
 
 
 	if (!links) {
@@ -28,7 +31,6 @@ const InternalLinkList = () => {
 
 	const onCreateLink = async () => {
 		resetLinkCreationState()
-		console.log('is valid?', createLinkForm.current.checkValidity())
 		setFormError(null)
 
 		if (!createLinkForm.current.checkValidity()) {
@@ -47,10 +49,47 @@ const InternalLinkList = () => {
 		resetLinkCreationState()
 	}
 
+	const onCloseDeleteModal = () => {
+		setDeleteLinkSlug(null)
+		setIsDeleteModalOpen(false)
+	}
+
+	const onDeleteLink = () => {
+		console.log('Delete slug', deleteLinkSlug)
+		deleteLink(deleteLinkSlug)
+		setDeleteLinkSlug(null)
+		setIsDeleteModalOpen(false)
+	}
+
 	return (
 		<Dashboard>
 			<Modal
-				open={isModalOpen }
+				open={isDeleteModalOpen}
+				title="Delete Link?"
+				onClickOutside={onCloseDeleteModal}
+				onClose={onCloseDeleteModal}
+				actionButton={(
+					<>
+						<button
+							onClick={onCloseDeleteModal}
+							class="bg-gray-400 text-white px-4 py-2 rounded-md mx-4"
+						>
+							Cancel
+						</button>
+
+						<button
+							onClick={onDeleteLink}
+							class="bg-red-500 text-white px-4 py-2 rounded-md"
+						>
+							Delete
+						</button>
+					</>
+				)}
+			>
+				Are you sure you want to delete this link?
+			</Modal>
+			<Modal
+				open={isModalOpen}
 				title="Create Link"
 				onClose={onCloseModal}
 				actionButton={(
@@ -68,7 +107,7 @@ const InternalLinkList = () => {
 					</div>
 				)}
 
-				{linkCreationState == LinkCreationState.CREATED && (
+				{ && (
 					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
 						Created Link!
 					</div>
@@ -103,7 +142,6 @@ const InternalLinkList = () => {
 							placeholder="example.com"
 							value={url}
 							onChange={e => setURL(e.target.value)}
-							validationMessage="Please enter a url"
 						/>
 					</div>
 					<div>
@@ -155,7 +193,7 @@ const InternalLinkList = () => {
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-gray-200">
-									{links.map(link => (
+									{links.map((link) => (
 										<tr class="odd:bg-white even:bg-gray-100" key={link.id}>
 											<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{link.slug}</td>
 											<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{link.custom_slug}</td>
@@ -164,6 +202,18 @@ const InternalLinkList = () => {
 											<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{link.updated_at}</td>
 											<td class="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
 												<button type="button" class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none">Edit</button>
+											</td>
+											<td class="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
+												<button
+													type="button"
+													class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-red-600 hover:text-red-800 focus:outline-none focus:text-red-800 disabled:opacity-50 disabled:pointer-events-none"
+													onClick={(e) => {
+														setDeleteLinkSlug(link.slug)
+														setIsDeleteModalOpen(true)
+													}}
+												>
+													Delete
+												</button>
 											</td>
 										</tr>
 									))}

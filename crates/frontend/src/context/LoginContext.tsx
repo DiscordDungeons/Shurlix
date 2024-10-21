@@ -57,8 +57,8 @@ export const LoginContextProvider = ({
 	}
 
 	const fetchMe = async () => {
-		console.log('get me')
 		simpleDataFetch<User>('/api/user/me', data => {
+			setError(null)
 			setUser(data)
 		}).catch(e => {
 			setError(e.message)

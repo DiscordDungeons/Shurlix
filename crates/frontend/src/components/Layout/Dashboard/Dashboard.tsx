@@ -1,8 +1,9 @@
 import { ComponentChildren } from 'preact'
 import { useContext } from 'preact/hooks'
 import { LoginContext } from '../../../context/LoginContext'
-import { useLocation } from 'preact-iso'
+import { ToastContainer } from 'react-toastify'
 
+import 'react-toastify/dist/ReactToastify.css'
 
 type Props = {
 	children: ComponentChildren,
@@ -10,13 +11,13 @@ type Props = {
 
 
 export const Dashboard = ({
-	children
+	children,
 }: Props) => {
-	const {user} = useContext(LoginContext)
-	const { path } = useLocation()
+	const { user } = useContext(LoginContext)
 
 	return (
 		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none">
+			 <ToastContainer />
 			{/* Sidebar */}
 			<aside class="w-64 bg-gray-800 text-white flex-shrink-0">
 				<div class="p-4 font-bold text-xl">Shurlix</div>
