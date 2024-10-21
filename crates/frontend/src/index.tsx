@@ -5,11 +5,12 @@ import { Home } from './pages/Home/index.jsx'
 import { NotFound } from './pages/_404.jsx'
 import './style.scss'
 
-import {ConfigContextProvider} from './context/ConfigContext'
+import { ConfigContextProvider } from './context/ConfigContext'
 import { LoginContextProvider } from './context/LoginContext.js'
-import { LoginPage } from './pages/Login/index.js'
-import { LinkList } from './pages/Dash/Links.js'
-import { ApiContextProvider } from './context/ApiContext.js'
+import { LinkList } from './pages/Dash/Links'
+import { ApiContextProvider } from './context/ApiContext'
+import { LoginPage } from './pages/Login/index'
+import { RegisterPage } from './pages/Register/index.js'
 
 export function App() {
 	return (
@@ -20,6 +21,7 @@ export function App() {
 						<Router>
 							<Route path="/" component={Home} />
 							<Route path="/dash/login" component={LoginPage} />
+							<Route path="/dash/register" component={RegisterPage} />
 							<Route path="/dash/links" component={LinkList} />
 							<Route default component={NotFound} />
 						</Router>

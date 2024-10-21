@@ -1,9 +1,10 @@
 import { useContext, useRef, useState } from 'preact/hooks'
 import { LoginContext } from '../../context/LoginContext'
 import { useLocation } from 'preact-iso'
-
+import { ConfigContext } from '../../context/ConfigContext'
 
 export const LoginPage = () => {
+	const { allowRegistering } = useContext(ConfigContext)
 	const { loginUser, user, loginRedirectMessage, error } = useContext(LoginContext)
 	const { route } = useLocation()
 
@@ -90,6 +91,15 @@ export const LoginPage = () => {
 					<div>
 						<button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign in</button>
 					</div>
+
+					{allowRegistering && (
+						<p class="text-gray-500 text-xs text-center">
+							Or,&nbsp;
+							<a href="#" class="text-blue-600 font-sm hover:underline" onClick={() => route('/dash/register')}>
+							Register
+							</a>
+						</p>
+					)}
 				</form>
 
 				{/* <!-- Or continue with -->
