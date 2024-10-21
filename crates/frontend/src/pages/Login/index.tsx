@@ -1,21 +1,29 @@
-import { useContext, useState } from 'preact/hooks'
+import { useContext, useRef, useState } from 'preact/hooks'
 import { LoginContext } from '../../context/LoginContext'
 import { useLocation } from 'preact-iso'
 
 
 export const LoginPage = () => {
-	const { loginUser, user, loginRedirectMessage } = useContext(LoginContext)
+	const { loginUser, user, loginRedirectMessage, error } = useContext(LoginContext)
 	const { route } = useLocation()
 
-	const [email, setEmail] = useState("")
-	const [password, setPassword] = useState("")
+	const loginFormRef = useRef<HTMLFormElement>(null)
+
+	const [ email, setEmail ] = useState('')
+	const [ password, setPassword ] = useState('')
+	
 
 	const login = async () => {
+		console.log(loginFormRef)
+
+		if (!loginFormRef.current.checkValidity()) return
+
+		
 		await loginUser(email, password)
 	}
 
 	if (user) {
-		route("/dash/links")
+		route('/dash/links')
 	}
 
 	return (
@@ -24,6 +32,13 @@ export const LoginPage = () => {
 			{loginRedirectMessage && (
 				<div class="mb-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded w-full max-w-md">
 					{loginRedirectMessage}
+				</div>
+			)}
+
+			{/* Message Box */}
+			{error && (
+				<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					{error}
 				</div>
 			)}
 
@@ -37,24 +52,28 @@ export const LoginPage = () => {
 
 				<h2 class="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">Sign in to your account</h2>
 
-				<form class="space-y-6" onSubmit={(e) => {
-					e.preventDefault()
-					login()
-				}}>
+				<form
+					class="space-y-6"
+					onSubmit={(e) => {
+						e.preventDefault()
+						login()
+					}}
+					ref={loginFormRef}
+				>
 					<div>
 						<label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
-						<input type="email" id="email" class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+						<input required type="email" id="email" class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
 					</div>
 
 					<div>
 						<label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-						<input type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} />
+						<input required type="password" id="password" class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} />
 					</div>
 
 					<div class="flex items-center justify-between">
 						<div class="flex items-center">
-						<input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 text-indigo-600 dark:text-indigo-500 focus:ring-indigo-500 border-gray-300 dark:border-gray-500 rounded" />
-						<label for="remember_me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Remember me</label>
+							<input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 text-indigo-600 dark:text-indigo-500 focus:ring-indigo-500 border-gray-300 dark:border-gray-500 rounded" />
+							<label for="remember_me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Remember me</label>
 						</div>
 
 						<div class="text-sm">
@@ -63,7 +82,7 @@ export const LoginPage = () => {
 					</div>
 
 					<div>
-						<button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onClick={login}>Sign in</button>
+						<button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign in</button>
 					</div>
 				</form>
 

@@ -1,10 +1,17 @@
-import { useContext } from "preact/hooks"
-import { RequireLogin } from "../../components/HoC/RequireLogin"
-import { Dashboard } from "../../components/Layout/Dashboard/Dashboard"
-import { ApiContext } from "../../context/ApiContext"
+import { useContext, useRef, useState } from 'preact/hooks'
+import { RequireLogin } from '../../components/HoC/RequireLogin'
+import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
+import { ApiContext, LinkCreationState } from '../../context/ApiContext'
+import { Modal } from '../../components/Modal'
 
 const InternalLinkList = () => {
-	const { links, getMyLinks } = useContext(ApiContext)
+	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState } = useContext(ApiContext)
+	const createLinkForm = useRef<HTMLFormElement>(null)
+	const [ isModalOpen, setIsModalOpen ] = useState(false)
+
+	const [ url, setURL ] = useState<string>(null)
+	const [ customSlug, setCustomSlug ] = useState<string>(null)
+
 
 	if (!links) {
 		getMyLinks()
@@ -16,8 +23,72 @@ const InternalLinkList = () => {
 		)
 	}
 
+	const onCreateLink = async () => {
+		console.log('is valid?', createLinkForm.current.checkValidity())
+		if (!createLinkForm.current.checkValidity()) return
+
+		await createLink(url, customSlug)
+	}
+
+	const onCloseModal = () => {
+		setIsModalOpen(false)
+		resetLinkCreationState()
+	}
+
 	return (
 		<Dashboard>
+			<Modal open={isModalOpen && linkCreationState == LinkCreationState.CREATING} title="Creating link" onClose={onCloseModal}>
+				Creating link.
+			</Modal>
+			<Modal open={isModalOpen && linkCreationState == LinkCreationState.CREATED} title="Created link" onClose={onCloseModal}>
+				Created link!
+			</Modal>
+			<Modal
+				open={isModalOpen && linkCreationState === LinkCreationState.NONE}
+				title="Create Link"
+				onClose={onCloseModal}
+				actionButton={(
+					<button
+						onClick={onCreateLink}
+						class="bg-blue-500 text-white px-4 py-2 rounded-md"
+					>
+						Create
+					</button>
+				)}
+			>
+				<form
+					ref={createLinkForm}
+					onSubmit={(e) => {
+						e.preventDefault()
+						onCreateLink()
+					}}
+				>
+					<div>
+						<label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
+						<input
+							required
+							type="url"
+							id="url" 
+							class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+							placeholder="example.com"
+							value={url}
+							onChange={e => setURL(e.target.value)}
+						/>
+					</div>
+					<div>
+						<label for="custom-slug" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Custom Slug</label>
+						<input
+							type="text"
+							id="custom-slug" 
+							class="mt-1 block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+							placeholder="example"
+							value={customSlug}
+							onChange={e => setCustomSlug(e.target.value)}
+						/>
+					</div>
+				</form>
+			</Modal>
+			
 			<div class="flex flex-col p-2 ">
 				<div class="flex justify-between">
 					<div>
@@ -26,7 +97,13 @@ const InternalLinkList = () => {
 					</div>
 					<div>
 						<div class="mt-4">
-							<button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+							<button
+								class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+								onClick={() => {
+									setIsModalOpen(true)
+									resetLinkCreationState()
+								}}
+							>
 								Create new
 							</button>
 						</div>
@@ -48,7 +125,7 @@ const InternalLinkList = () => {
 								</thead>
 								<tbody class="divide-y divide-gray-200">
 									{links.map(link => (
-										<tr class="odd:bg-white even:bg-gray-100">
+										<tr class="odd:bg-white even:bg-gray-100" key={link.id}>
 											<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">{link.slug}</td>
 											<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{link.custom_slug}</td>
 											<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{link.original_link}</td>

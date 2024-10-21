@@ -1,6 +1,6 @@
 import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
-import { simpleDataFetch, simpleDataPost } from './contextUtils'
+import { APIError, simpleDataFetch, simpleDataPost } from './contextUtils'
 import { useLocation } from 'preact-iso'
 
 type User = {
@@ -32,15 +32,15 @@ export const LoginContext = createContext<ILoginContext>(null)
 export const LoginContextProvider = ({
 	children,
 }) => {
-	const [user, setUser] = useState<User | null>(null)
-	const [error, setError] = useState<string | null>(null)
-	const [loginRedirectMessage, setLoginRedirectMessage] = useState<string | null>(null)
-	const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null)
+	const [ user, setUser ] = useState<User | null>(null)
+	const [ error, setError ] = useState<string | null>(null)
+	const [ loginRedirectMessage, setLoginRedirectMessage ] = useState<string | null>(null)
+	const [ loginRedirectTo, setLoginRedirectTo ] = useState<string | null>(null)
 
 	const { route, path } = useLocation()
 
 	const loginUser = async (email: string, password: string) => {
-		simpleDataPost<LoginResponse>("/api/user/login", { email, password }, (data) => {
+		simpleDataPost<LoginResponse>('/api/user/login', { email, password }, (data) => {
 			setError(null)
 			setLoginRedirectMessage(null)
 
@@ -51,18 +51,20 @@ export const LoginContextProvider = ({
 				route(loginRedirectTo)
 				setLoginRedirectTo(null)
 			}
+		}).catch((e: APIError) => {
+			setError(e.message)
 		})
 	}
 
 	const fetchMe = async () => {
-		console.log("get me")
-		simpleDataFetch<User>("/api/user/me", data => {
+		console.log('get me')
+		simpleDataFetch<User>('/api/user/me', data => {
 			setUser(data)
 		}).catch(e => {
 			setError(e.message)
 
 			if (e.statusCode === 401) {
-				setLoginRedirectMessage("Please login again.")
+				setLoginRedirectMessage('Please login again.')
 				setLoginRedirectTo(path)
 				// localStorage.setItem('isLoggedIn', 'false')
 				
