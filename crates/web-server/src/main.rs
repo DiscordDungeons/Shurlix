@@ -13,8 +13,6 @@ use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, 
 use mime_guess::from_path;
 use std::net::SocketAddr;
 
-
-
 async fn asset_handler(uri: axum::http::Uri) -> Response {
     let path = uri.clone().to_string().replace("/assets/", "");
     match Asset::get(&path) {
@@ -47,6 +45,8 @@ async fn main() {
     let config = config::Config::new();
 
     let pool = db::create_pool(&config.database_url);
+
+    db::run_migrations(&pool.clone());
 
 
     // build our application with a route
