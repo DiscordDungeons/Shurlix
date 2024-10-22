@@ -12,6 +12,7 @@ use argon2::{
     },
     Argon2
 };
+use zxcvbn::{feedback::{Suggestion, Warning}, zxcvbn, Entropy, Score};
 
 use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, util::jwt::encode_user_token};
 
@@ -25,6 +26,11 @@ struct RegisterRequest {
 #[derive(Deserialize)]
 struct LoginRequest {
     email: String,
+    password: String,
+}
+
+#[derive(Deserialize)]
+struct CheckPasswordRequest {
     password: String,
 }
 
@@ -42,13 +48,58 @@ struct LoginResponse {
 	user: SanitizedUser,
 }
 
+#[derive(Serialize)]
+struct CheckPasswordFeedback {
+	warning: Option<Warning>,
+	warning_string: Option<String>,
+	suggestion: Vec<Suggestion>,
+	suggestion_string: Option<String>,
+}
+
+#[derive(Serialize)]
+struct CheckPasswordResponse {
+	score: Score,
+	feedback: Option<CheckPasswordFeedback>,
+}
+
+impl From<Entropy> for CheckPasswordResponse {
+	fn from(value: Entropy) -> Self {
+		
+		Self {
+			score: value.score(),
+			feedback: match value.feedback() {
+				Some(feedback) => Some(CheckPasswordFeedback {
+					warning: feedback.warning(),
+					warning_string: match feedback.warning() {
+						Some(warning) => Some(format!("{}", warning)),
+						None => None,
+					},
+					suggestion: feedback.suggestions().to_vec(),
+					suggestion_string: Some(feedback.suggestions().iter().map(|s| {
+						format!("{}", s)
+					}).collect::<Vec<_>>()
+					.join(" "))
+				}),
+				None => None,
+			}
+		}
+	}
+}
+
 async fn register_user(
     Extension(pool): Extension<DbPool>,
+    Extension(config): Extension<Config>,
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
 	// TODO: Password requirements
 	if !EmailAddress::is_valid(&payload.email) {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
+	}
+
+	let password_estimate = zxcvbn(&payload.password, &[]);
+
+	if password_estimate.score().lt(&config.min_password_strength) {
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
 	}
 
 	let conn = &mut pool.get().map_err(|e| {
@@ -177,11 +228,39 @@ async fn my_links(
 	}
 }
 
+async fn logout_user(
+	jar: CookieJar,
+) -> CookiedAPIResponse<GenericMessage> {
+	let cookie = Cookie::build(("auth_token", "deleted"))
+		.http_only(true) // Prevent JavaScript access
+		.secure(false) // Only send over HTTPS
+		.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
+		.path("/") // Path for which the cookie is valid
+		.max_age(time::Duration::hours(1)) // Set cookie expiration
+		.expires(time::OffsetDateTime::from_unix_timestamp(0).unwrap())
+		.build();
+
+	let jar2 = jar.add(cookie);
+
+	Ok((jar2, GenericMessage::new("Logged out")))
+}
+
+async fn check_password(
+	Json(payload): Json<CheckPasswordRequest>,
+) -> APIResponse<CheckPasswordResponse> {
+	let estimate = zxcvbn(&payload.password, &[]);
+
+	Ok((StatusCode::OK, Json(CheckPasswordResponse::from(estimate))))
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
+	 	.route("/password", post(check_password))
         .route("/register", post(register_user))
         .route("/login", post(login_user))
+        .route("/logout", post(logout_user))
 		.route("/me", get(user_profile))
 		.route("/me/links", get(my_links))
+		
 }

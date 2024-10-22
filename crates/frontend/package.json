@@ -8,7 +8,8 @@
 	},
 	"dependencies": {
 		"preact": "^10.13.1",
-		"preact-iso": "^2.6.3"
+		"preact-iso": "^2.6.3",
+		"react-toastify": "^10.0.6"
 	},
 	"devDependencies": {
 		"@preact/preset-vite": "^2.5.0",

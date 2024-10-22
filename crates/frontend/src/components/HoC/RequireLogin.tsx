@@ -1,12 +1,11 @@
 import { useContext, useEffect } from 'preact/hooks'
 import { LoginContext } from '../../context/LoginContext'
-import { useLocation } from 'preact-iso'
 
 
 export const RequireLogin = (WrappedComponent: any) => {
 	// const { route } = useLocation()
 
-	const isLoggedIn = localStorage.getItem('isLoggedIn') === "true"
+	const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
 
 	if (!isLoggedIn) {
 		const newComponent = () => {

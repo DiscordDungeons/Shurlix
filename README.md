@@ -6,10 +6,10 @@ Simple URL Shortener service
 
 - [ ] Proper readme
 - [ ] User interface
-    - [ ] Login / Create user
+    - [x] Login / Create user
     - [ ] Enable / Disable user creation
     - [ ] Dashboard
-        - [ ] Links dashboard (overview, deletion, etc)
+        - [x] Links dashboard (overview, deletion, etc)
         - [ ] User settings
 - [x] Enable / Disable anonymous shortening
 - [ ] API
@@ -22,7 +22,8 @@ Simple URL Shortener service
             - [ ] By user
             - [ ] All   
                 - [ ] As admin
-                - [ ] As user
+                - [x] As user
         - [ ] Delete links
             - [x] As user
             - [ ] As admin
+

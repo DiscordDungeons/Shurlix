@@ -1,7 +1,9 @@
 import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
-import { simpleDataFetch, simpleDataPost } from './contextUtils'
+import { APIError, simpleDataFetch, simpleDataPost } from './contextUtils'
 import { useLocation } from 'preact-iso'
+import { deleteCookie } from '../util/cookies'
+import { toast } from 'react-toastify'
 
 type User = {
     id: number,
@@ -24,6 +26,7 @@ export type ILoginContext = {
 	loginRedirectMessage: string | null,
 	loginRedirectTo: string | null,
 	loginUser: (email: string, password: string) => Promise<void>,
+	logoutUser: () => void,
 	fetchMe: () => Promise<void>,
 }
 
@@ -32,15 +35,15 @@ export const LoginContext = createContext<ILoginContext>(null)
 export const LoginContextProvider = ({
 	children,
 }) => {
-	const [user, setUser] = useState<User | null>(null)
-	const [error, setError] = useState<string | null>(null)
-	const [loginRedirectMessage, setLoginRedirectMessage] = useState<string | null>(null)
-	const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null)
+	const [ user, setUser ] = useState<User | null>(null)
+	const [ error, setError ] = useState<string | null>(null)
+	const [ loginRedirectMessage, setLoginRedirectMessage ] = useState<string | null>(null)
+	const [ loginRedirectTo, setLoginRedirectTo ] = useState<string | null>(null)
 
 	const { route, path } = useLocation()
 
 	const loginUser = async (email: string, password: string) => {
-		simpleDataPost<LoginResponse>("/api/user/login", { email, password }, (data) => {
+		simpleDataPost<LoginResponse>('/api/user/login', { email, password }, (data) => {
 			setError(null)
 			setLoginRedirectMessage(null)
 
@@ -51,23 +54,40 @@ export const LoginContextProvider = ({
 				route(loginRedirectTo)
 				setLoginRedirectTo(null)
 			}
+		}).catch((e: APIError) => {
+			setError(e.message)
 		})
 	}
 
 	const fetchMe = async () => {
-		console.log("get me")
-		simpleDataFetch<User>("/api/user/me", data => {
+		simpleDataFetch<User>('/api/user/me', data => {
+			setError(null)
 			setUser(data)
 		}).catch(e => {
 			setError(e.message)
 
 			if (e.statusCode === 401) {
-				setLoginRedirectMessage("Please login again.")
+				setLoginRedirectMessage('Please login again.')
 				setLoginRedirectTo(path)
-				// localStorage.setItem('isLoggedIn', 'false')
+				localStorage.setItem('isLoggedIn', 'false')
 				
 				route('/dash/login')
 			}
+		})
+	}
+
+	const logoutUser = async () => {
+		setError(null)
+		setUser(null)
+
+		await simpleDataPost('/api/user/logout', {}, () => {
+			localStorage.setItem('isLoggedIn', 'false')
+			setLoginRedirectMessage('Logged out.')
+
+			route('/dash/login')
+		}).catch(e => {
+			toast.error('Logout failed?')
+			console.error(e)
 		})
 	}
 
@@ -80,6 +100,7 @@ export const LoginContextProvider = ({
 				loginRedirectMessage,
 				loginRedirectTo,
 				loginUser,
+				logoutUser,
 				fetchMe,
 			}}
 		>

@@ -1,4 +1,4 @@
-class APIError extends Error {
+export class APIError extends Error {
 	statusCode: number
 
 	constructor(message: string, statusCode: number) {
@@ -19,7 +19,7 @@ export const simpleDataFetch = async <T>(url: string, setFn: (data: T) => void):
 
 	const data = await request.json()
 
-	if (request.status === 200) {
+	if (request.ok) {
 		setFn(data)
 	} else {
 		throw new APIError(data.message, request.status)
@@ -41,10 +41,27 @@ export const simpleDataPost = async <T>(
 
 	const requestData = await request.json()
 
-	if (request.status === 200) {
+	if (request.ok) {
 		setFn(requestData)
 	} else {
 		throw new APIError(requestData.message, request.status)
 	}
 
+}
+
+export const simpleDelete = async <T>(url: string, setFn: (data: T) => void): Promise<void> => {
+	const request = await fetch(url, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	const data = await request.json()
+
+	if (request.ok) {
+		setFn(data)
+	} else {
+		throw new APIError(data.message, request.status)
+	}
 }
