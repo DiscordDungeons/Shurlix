@@ -32,7 +32,7 @@ export const Home = () => {
 		setLongLink(e.target.value)
 
 		try {
-			const url = new URL(e.target.value)
+			new URL(e.target.value)
 			setCanCreateLink(true)
 		} catch (e) {
 			setCanCreateLink(false)

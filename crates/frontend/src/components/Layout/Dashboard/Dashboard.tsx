@@ -1,5 +1,5 @@
 import { ComponentChildren } from 'preact'
-import { useContext, useState } from 'preact/hooks'
+import { useContext } from 'preact/hooks'
 import { LoginContext } from '../../../context/LoginContext'
 import { ToastContainer } from 'react-toastify'
 
@@ -17,7 +17,7 @@ export const Dashboard = ({
 	title = 'Dashboard',
 }: Props) => {
 	const { user, logoutUser } = useContext(LoginContext)
-	
+
 	return (
 		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none">
 			<ToastContainer />
@@ -33,7 +33,7 @@ export const Dashboard = ({
 						</li>
 						<li>
 							<a href="/dash/me" class="block px-4 py-2 hover:bg-gray-700">
-								User
+								User settings
 							</a>
 						</li>
 						<li>
