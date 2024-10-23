@@ -27,3 +27,6 @@ Simple URL Shortener service
             - [x] As user
             - [ ] As admin
 
+
+- Admin panel (user & link mgmt)
+- User updates (email change, password change)

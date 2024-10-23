@@ -10,6 +10,7 @@ pub struct Config {
     pub jwt_secret: String,
     pub min_password_strength: Score,
     pub allow_registering: bool,
+    pub base_url: String,
 }
 
 // TODO: Improve this code
@@ -22,6 +23,7 @@ impl Config {
         let shortened_link_length = std::env::var("SHORTENED_LINK_LENGTH").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "SHORTENED_LINK_LENGTH".yellow(), "not set in .env"));
         let jwt_secret = std::env::var("JWT_SECRET").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "JWT_SECRET".yellow(), "not set in .env"));
         let min_password_strength = std::env::var("MIN_PASSWORD_STRENGTH").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "MIN_PASSWORD_STRENGTH".yellow(), "not set in .env"));
+        let base_url = std::env::var("BASE_URL").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "BASE_URL".yellow(), "not set in .env"));
 
         let shortened_link_length = match shortened_link_length.parse::<usize>() {
             Ok(n) => n,
@@ -60,6 +62,7 @@ impl Config {
             jwt_secret,
             min_password_strength,
             allow_registering,
+            base_url,
         }
     }
 }

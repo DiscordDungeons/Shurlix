@@ -1,38 +1,41 @@
 import { ComponentChildren } from 'preact'
-import { useContext } from 'preact/hooks'
+import { useContext, useState } from 'preact/hooks'
 import { LoginContext } from '../../../context/LoginContext'
 import { ToastContainer } from 'react-toastify'
 
 import 'react-toastify/dist/ReactToastify.css'
+import DarkModeToggle from './DarkToggle'
 
 type Props = {
 	children: ComponentChildren,
+	title?: string
 }
 
 
 export const Dashboard = ({
 	children,
+	title = 'Dashboard',
 }: Props) => {
 	const { user, logoutUser } = useContext(LoginContext)
-
+	
 	return (
 		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none">
-			 <ToastContainer />
+			<ToastContainer />
 			{/* Sidebar */}
 			<aside class="w-64 bg-gray-800 text-white flex-shrink-0">
 				<div class="p-4 font-bold text-xl">Shurlix</div>
 				<nav class="mt-6">
 					<ul class="space-y-4">
 						<li>
-							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
+							<a href="/dash/links" class="block px-4 py-2 hover:bg-gray-700">
 								Links
 							</a>
 						</li>
-						{/* <li>
-							<a href="#" class="block px-4 py-2 hover:bg-gray-700">
-								Settings
+						<li>
+							<a href="/dash/me" class="block px-4 py-2 hover:bg-gray-700">
+								User
 							</a>
-						</li> */}
+						</li>
 						<li>
 							<a href="#" class="block px-4 py-2 hover:bg-gray-700" onClick={logoutUser}>
 								Logout
@@ -47,13 +50,15 @@ export const Dashboard = ({
 				<header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
 					{/* Dashboard title */}
 					<div class="flex items-center px-3 py-2 w-1/3">
-						<h1 class="text-lg">Dashboard</h1>
+						<h1 class="text-lg">{title}</h1>
 					</div>
 
 					{/* Right side icons and profile */}
 					<div class="flex items-center space-x-6">
 						
 						{/* Todo: add dark mode toggle  */}
+
+						<DarkModeToggle />
 
 						{/* Profile */}
 						<div class="flex items-center space-x-2">

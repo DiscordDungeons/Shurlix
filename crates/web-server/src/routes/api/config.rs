@@ -10,6 +10,7 @@ struct ConfigResponse {
     allow_anonymous_shorten: bool,
 	allow_registering: bool,
 	min_password_strength: Score,
+	base_url: String,
 }
 
 async fn get_config(
@@ -19,6 +20,7 @@ async fn get_config(
 		allow_anonymous_shorten: config.allow_anonymous_shorten,
 		allow_registering: config.allow_registering,
 		min_password_strength: config.min_password_strength,
+		base_url: config.base_url,
 	};
 
 	Ok((StatusCode::OK, Json(response)))
