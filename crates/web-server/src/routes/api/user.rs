@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router};
+use axum::{http::StatusCode, routing::{get, post, put}, Extension, Json, Router};
 use db::{models::{Link, NewUser, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
@@ -55,11 +55,17 @@ struct CheckPasswordFeedback {
 	suggestion: Vec<Suggestion>,
 	suggestion_string: Option<String>,
 }
-
 #[derive(Serialize)]
 struct CheckPasswordResponse {
 	score: Score,
 	feedback: Option<CheckPasswordFeedback>,
+}
+
+#[derive(Deserialize)]
+struct ChangePasswordRequest {
+	password: String,
+	new_password: String,
+	confirm_password: String,
 }
 
 impl From<Entropy> for CheckPasswordResponse {
@@ -253,6 +259,66 @@ async fn check_password(
 	Ok((StatusCode::OK, Json(CheckPasswordResponse::from(estimate))))
 }
 
+async fn update_password(
+	AuthedUser(user): AuthedUser,
+    Extension(config): Extension<Config>,
+	Extension(pool): Extension<DbPool>,
+	Json(payload): Json<ChangePasswordRequest>,
+) -> APIResponse<GenericMessage> {
+	let owner_id: Option<i32> = user.clone().map(|u| u.id);
+
+	if owner_id.is_none() {
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
+
+	let user = user.unwrap();
+
+	
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	// Confirm password
+
+	let argon2 = Argon2::default();
+    let parsed_hash = PasswordHash::new(&user.password_hash).map_err(|_| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error"))
+    })?;
+
+	 // Verify the password
+	 match argon2.verify_password(&payload.password.as_bytes(), &parsed_hash) {
+        Ok(_) => {
+			if payload.new_password != payload.confirm_password {
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Passwords do not match.")));
+			}
+
+			let password_estimate = zxcvbn(&payload.new_password, &[]);
+
+			if password_estimate.score().lt(&config.min_password_strength) {
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
+			}
+
+			let salt = SaltString::generate(&mut OsRng);
+
+			let argon2 = Argon2::default();
+
+			// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
+
+			// Hash password to PHC string ($argon2id$v=19$...)
+			let password_hash = match argon2.hash_password(&payload.new_password.into_bytes(), &salt) {
+				Ok(hash) => hash.to_string(),
+				Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
+			};
+
+			match user.update_password_hash(password_hash, conn) {
+				Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Password updated."))),
+				Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
+			}			
+		}
+        Err(_) => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials.")))
+    }
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
@@ -262,5 +328,6 @@ pub fn user_router() -> Router {
         .route("/logout", post(logout_user))
 		.route("/me", get(user_profile))
 		.route("/me/links", get(my_links))
+        .route("/me/password", post(update_password))
 		
 }

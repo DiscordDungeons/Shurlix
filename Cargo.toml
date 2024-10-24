@@ -11,8 +11,4 @@ name = "shurlix"
 version = "0.1.0"
 edition = "2021"
 
-
-[alias]
-r = "run --package web-server"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

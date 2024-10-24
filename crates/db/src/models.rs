@@ -145,6 +145,14 @@ impl User {
         )
         .load::<User>(conn)
     }
+
+    pub fn update_password_hash(&self, password_hash: String, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::update(users::table.filter(
+            users::id.eq(self.id)
+        ))
+        .set(users::password_hash.eq(password_hash))
+        .execute(conn)
+    }
 }
 
 

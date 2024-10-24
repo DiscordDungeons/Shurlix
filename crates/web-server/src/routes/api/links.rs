@@ -1,5 +1,5 @@
 use axum::{extract::Path, http::StatusCode, routing::{delete, post}, Extension, Json, Router};
-use db::{models::{Link, NewLink, User}, DbPool};
+use db::{models::{Link, NewLink}, DbPool};
 use crate::{common::{APIResponse, GenericMessage}, config::Config, constants, extensions::auth::AuthedUser, util::{self, is_url, starts_with_any}};
 
 
@@ -70,7 +70,6 @@ async fn create_link(
 }
 
 async fn delete_link(
-    Extension(config): Extension<Config>,
     Extension(pool): Extension<DbPool>,
     AuthedUser(user): AuthedUser,
     Path(slug): Path<String>,
