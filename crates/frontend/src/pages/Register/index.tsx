@@ -21,6 +21,7 @@ export const RegisterPage = () => {
 		confirmPassword: '',
 	})
 
+	// TODO: Check this against the API endpoint
 	const validatePassword = (pass: string) => true
 
 	const validateForm = () => {

@@ -25,9 +25,12 @@ export type ILoginContext = {
 	error: string | null,
 	loginRedirectMessage: string | null,
 	loginRedirectTo: string | null,
+	// eslint-disable-next-line no-unused-vars
 	loginUser: (email: string, password: string) => Promise<void>,
 	logoutUser: () => void,
 	fetchMe: () => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>,
 }
 
 export const LoginContext = createContext<ILoginContext>(null)
@@ -91,6 +94,19 @@ export const LoginContextProvider = ({
 		})
 	}
 
+	const changePassword = async (password: string, new_password: string, confirm_password: string) => {
+		setError(null)
+
+		await simpleDataPost('/api/user/me/password', {
+			password,
+			new_password,
+			confirm_password,
+		}, () => {
+			toast.success('Password updated.')
+		}).catch((e: APIError) => {
+			toast.error(`Failed to update password: ${e.message}`)
+		})
+	}
 
 	return (
 		<LoginContext.Provider
@@ -102,6 +118,7 @@ export const LoginContextProvider = ({
 				loginUser,
 				logoutUser,
 				fetchMe,
+				changePassword,
 			}}
 		>
 			{children}

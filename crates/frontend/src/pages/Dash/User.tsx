@@ -1,7 +1,30 @@
+import { useContext, useState } from 'preact/hooks'
 import { RequireLogin } from '../../components/HoC/RequireLogin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
+import { LoginContext } from '../../context/LoginContext'
 
 const InternalUserPage = () => {
+	const { changePassword, error } = useContext(LoginContext)
+
+	const [ formData, setFormData ] = useState({
+		currentPassword: '',
+		newPassword: '',
+		confirmPassword: '',
+	})
+
+	const handleChange = (e) => {
+		setFormData({
+			...formData,
+			[e.target.name]: e.target.value,
+		})
+	}
+
+	const onSubmitPasswordChange = (e) => {
+		e.preventDefault()
+
+		changePassword(formData.currentPassword, formData.newPassword, formData.confirmPassword)
+	}
+
 	return (
 		<Dashboard>
 			<div class="bg-gray-100 min-h-screen">
@@ -59,33 +82,42 @@ const InternalUserPage = () => {
 
 						{/* Right Column */}
 						<div>
-							<form>
+							<form onSubmit={onSubmitPasswordChange}>
 								{/* Current Password */}
 								<div class="mb-4">
-									<label class="block text-gray-700 mb-2" for="current-password">Current password</label>
+									<label class="block text-gray-700 mb-2" for="currentPassword">Current password</label>
 									<input
-										id="current-password"
+										id="currentPassword"
 										type="password"
+										name="currentPassword"
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										value={formData.currentPassword}
+										onChange={handleChange}
 									/>
 								</div>
           
 								{/* New Password */}
 								<div class="mb-4">
-									<label class="block text-gray-700 mb-2" for="new-password">New password</label>
+									<label class="block text-gray-700 mb-2" for="newPassword">New password</label>
 									<input
-										id="new-password"
+										id="newPassword"
 										type="password"
+										name="newPassword"
+										value={formData.newPassword}
+										onChange={handleChange}
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
 									/>
 								</div>
           
 								{/* Confirm Password */}
 								<div class="mb-6">
-									<label class="block text-gray-700 mb-2" for="confirm-password">Confirm password</label>
+									<label class="block text-gray-700 mb-2" for="confirmPassword">Confirm password</label>
 									<input
-										id="confirm-password"
+										id="confirmPassword"
+										name="confirmPassword"
 										type="password"
+										value={formData.confirmPassword}
+										onChange={handleChange}
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
 									/>
 								</div>
