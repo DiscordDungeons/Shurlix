@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::{get, post, put}, Extension, Json, Router};
+use axum::{http::StatusCode, routing::{get, post, put}, Extension, Json, Router, extract::Query};
 use db::{models::{Link, NewUser, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
@@ -66,6 +66,18 @@ struct ChangePasswordRequest {
 	password: String,
 	new_password: String,
 	confirm_password: String,
+}
+
+#[derive(Deserialize)]
+struct Pagination {
+	per_page: i64,
+	page: i64,
+}
+
+#[derive(Serialize)]
+struct PaginatedLinks {
+	links: Vec<Link>,
+	total_count: i64,
 }
 
 impl From<Entropy> for CheckPasswordResponse {
@@ -214,8 +226,9 @@ async fn user_profile(
 
 async fn my_links(
 	AuthedUser(user): AuthedUser,
+	Query(pagination): Query<Pagination>,
 	Extension(pool): Extension<DbPool>,
-) -> APIResponse<Vec<Link>> {
+) -> APIResponse<PaginatedLinks> {
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
     if owner_id.is_none() {
@@ -226,12 +239,13 @@ async fn my_links(
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
-	let links = Link::get_by_owner_id(owner_id.unwrap(), conn);
+	let links = Link::get_by_owner_id_paginated(owner_id.unwrap(), pagination.page, pagination.per_page, conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
+	let total_count = Link::get_total_count(owner_id.unwrap(), conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 
-	match links {
-		Ok(links) => Ok((StatusCode::OK, Json(links))),
-		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
-	}
+	Ok((StatusCode::OK, Json(PaginatedLinks {
+		links,
+		total_count,
+	})))
 }
 
 async fn logout_user(

@@ -47,6 +47,19 @@ impl Link {
         .load::<Link>(conn)
     }
 
+    pub fn get_by_owner_id_paginated(owner: i32, page: i64, per_page: i64, conn: &mut DbConnection) -> Result<Vec<Link>, diesel::result::Error> {
+        let offset_value = (page - 1) * per_page;
+        links::table
+            .filter(links::owner_id.eq(owner))
+            .limit(per_page)
+            .offset(offset_value)
+            .load::<Link>(conn)
+    }
+
+    pub fn get_total_count(owner: i32, conn: &mut DbConnection) -> QueryResult<i64> {
+        links::table.filter(links::owner_id.eq(owner)).count().get_result(conn)
+    }
+
     pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
         diesel::delete(links::table.filter(links::id.eq(self.id))).execute(conn)
     }

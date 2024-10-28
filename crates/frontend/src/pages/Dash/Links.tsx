@@ -6,7 +6,10 @@ import { Modal } from '../../components/Modal'
 import { isValidUrl } from '../../util/validator'
 
 const InternalLinkList = () => {
-	const { links, getMyLinks, createLink, linkCreationState, resetLinkCreationState, error, deleteLink } = useContext(ApiContext)
+	const {
+		links, getMyLinks, createLink, linkCreationState, resetLinkCreationState, error, deleteLink,
+		totalLinkCount, perPage, setPerPage, setCurrentLinkPage, currentLinkPage,
+	} = useContext(ApiContext)
 	const createLinkForm = useRef<HTMLFormElement>(null)
 	const [ isModalOpen, setIsModalOpen ] = useState(false)
 
@@ -17,6 +20,16 @@ const InternalLinkList = () => {
 
 	const [ deleteLinkSlug, setDeleteLinkSlug ] = useState<string>(null)
 	const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState<boolean>(false)
+
+	// Calculate total pages
+	const totalPages = Math.ceil(totalLinkCount / perPage)
+
+	// Handler for changing pages
+	const handlePageChange = (newPage) => {
+		if (newPage >= 1 && newPage <= totalPages) {
+			setCurrentLinkPage(newPage)
+		}
+	}
 
 
 	if (!links) {
@@ -179,6 +192,19 @@ const InternalLinkList = () => {
 					</div>
 				</div>
 				<div class="-m-1.5 overflow-x-auto">
+					<div className="mt-4">
+						<label htmlFor="perPage" className="text-sm text-gray-600 mr-2">Items per page:</label>
+						<select
+							id="perPage"
+							value={perPage}
+							onChange={(e) => setPerPage(Number(e.target.value))}
+							className="px-3 py-1 text-sm text-gray-700 bg-white border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						>
+							<option value="5">5</option>
+							<option value="10">10</option>
+							<option value="20">20</option>
+						</select>
+					</div>
 					<div class="p-1.5 min-w-full inline-block align-middle">
 						<div class="overflow-hidden border">
 							<table class="min-w-full divide-y divide-gray-200 overflow-x-hidden">
@@ -219,6 +245,26 @@ const InternalLinkList = () => {
 									))}
 								</tbody>
 							</table>
+
+							<div className="flex items-center justify-between mt-4">
+								<button
+									onClick={() => handlePageChange(currentLinkPage - 1)}
+									disabled={currentLinkPage === 1}
+									className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Previous
+								</button>
+        
+								<span className="text-sm text-gray-600">Page {currentLinkPage} of {totalPages}</span>
+        
+								<button
+									onClick={() => handlePageChange(currentLinkPage + 1)}
+									disabled={currentLinkPage === totalPages}
+									className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									Next
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
