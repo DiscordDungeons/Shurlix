@@ -7,17 +7,17 @@ Simple URL Shortener service
 - [ ] Proper readme
 - [ ] User interface
     - [x] Login / Create user
-    - [ ] Enable / Disable user creation
+    - [x] Enable / Disable user creation
     - [ ] Dashboard
         - [x] Links dashboard (overview, deletion, etc)
         - [ ] User settings
+            - [ ] Update email & username
+            - [x] Change password
+            - [ ] Delete account
 - [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links
         - [x] Create links
-        - [ ] Update links
-            - [ ] As user
-            - [ ] As admin
         - [ ] Read links
             - [ ] By user
             - [ ] All   
