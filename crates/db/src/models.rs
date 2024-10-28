@@ -44,6 +44,7 @@ impl Link {
         links::table.filter(
             links::owner_id.eq(owner)
         )
+        .order_by(links::created_at.desc())
         .load::<Link>(conn)
     }
 
@@ -51,6 +52,7 @@ impl Link {
         let offset_value = (page - 1) * per_page;
         links::table
             .filter(links::owner_id.eq(owner))
+            .order_by(links::created_at.desc())
             .limit(per_page)
             .offset(offset_value)
             .load::<Link>(conn)

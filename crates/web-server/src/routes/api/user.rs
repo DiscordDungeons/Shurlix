@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::{get, post, put}, Extension, Json, Router, extract::Query};
+use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router, extract::Query};
 use db::{models::{Link, NewUser, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};

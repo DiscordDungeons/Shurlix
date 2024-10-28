@@ -86,8 +86,8 @@ export const ApiContextProvider = ({
 			setError(null)
 			const newLinks = [ data, ...links ]
 			setLinkCreationState(LinkCreationState.CREATED)
-
 			setLinks(newLinks)
+			setTotalLinkCount(totalLinkCount + 1)
 		}).catch((e: APIError) => {
 			setLinkCreationState(LinkCreationState.FAILED)
 			setError(e.message)
@@ -104,6 +104,7 @@ export const ApiContextProvider = ({
 
 			toast.success('Link deleted.')
 			setError(null)
+			setTotalLinkCount(totalLinkCount - 1)
 		}).catch((e: APIError) => {
 			toast.error(e.message)
 		})
