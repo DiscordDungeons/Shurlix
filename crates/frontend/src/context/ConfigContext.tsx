@@ -1,5 +1,5 @@
 import { createContext } from 'preact'
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { simpleDataFetch } from './contextUtils'
 
 export type IConfigContext = {
@@ -33,15 +33,19 @@ export const ConfigContextProvider = ({
 		baseUrl: null,
 	})
 
-
-	simpleDataFetch<ConfigResponse>('/api/config', (data) => {
-		setConfig({
-			allowCreateAnonymousLinks: data.allow_anonymous_shorten,
-			allowRegistering: data.allow_registering,
-			minPasswordStrength: data.min_password_strength,
-			baseUrl: data.base_url,
+	useEffect(() => {
+		simpleDataFetch<ConfigResponse>('/api/config', (data) => {
+			setConfig({
+				allowCreateAnonymousLinks: data.allow_anonymous_shorten,
+				allowRegistering: data.allow_registering,
+				minPasswordStrength: data.min_password_strength,
+				baseUrl: data.base_url,
+			})
 		})
-	})
+	}, [])
+
+
+	
 
 	return (
 		<ConfigContext.Provider
