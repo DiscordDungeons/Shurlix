@@ -12,6 +12,7 @@ use common::GenericMessage;
 use db::{models::Link, DbPool};
 use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use mime_guess::from_path;
+use services::email::Email;
 use std::net::SocketAddr;
 
 async fn asset_handler(uri: axum::http::Uri) -> Response {
@@ -46,6 +47,13 @@ async fn main() {
     let config = config::Config::new();
 
     let pool = db::create_pool(&config.database_url);
+    let email: Option<Email> = match config.smtp.enabled {
+        true => match Email::new(config.smtp.clone()) {
+            Ok(email) => Some(email),
+            Err(e) => panic!("Failed to create email service {:#?}", e)
+        }
+        false => Some(Email::default()),
+    };
 
     db::run_migrations(&pool.clone());
 
@@ -57,6 +65,7 @@ async fn main() {
         .route("/:slug", get(handle_slug))
         .nest("/api", routes::api::api_router())
         .layer(Extension(config))
+        .layer(Extension(email.unwrap()))
         .layer(Extension(pool.clone()));
 
     // run it

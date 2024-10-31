@@ -11,6 +11,7 @@ pub struct SmtpConfig {
     pub password: Option<String>,
     pub from: Option<String>,
     pub host: Option<String>,
+    pub port: Option<u16>,
 }
 
 #[derive(Clone, Debug)]
@@ -69,6 +70,7 @@ impl Config {
         let password = Config::get_var::<String>("SMTP_PASSWORD");
         let from = Config::get_var::<String>("SMTP_FROM");
         let host = Config::get_var::<String>("SMTP_HOST");
+        let port = Config::get_var::<u16>("SMTP_PORT");
 
         if enabled {
             let mut missing_vars = vec![];
@@ -78,6 +80,7 @@ impl Config {
                 ("SMTP_PASSWORD", &password),
                 ("SMTP_FROM", &from),
                 ("SMTP_HOST", &host),
+                ("SMTP_PORT", &host),
             ] {
                 if value.is_none() || value.clone().is_some_and(|val| val == "") {
                     missing_vars.push(name);
@@ -98,6 +101,7 @@ impl Config {
             password,
             from,
             host,
+            port,
         }
     }
 

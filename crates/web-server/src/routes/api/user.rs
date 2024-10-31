@@ -14,7 +14,7 @@ use argon2::{
 };
 use zxcvbn::{feedback::{Suggestion, Warning}, zxcvbn, Entropy, Score};
 
-use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, util::jwt::encode_user_token};
+use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::Email, util::jwt::encode_user_token};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -333,6 +333,35 @@ async fn update_password(
     }
 }
 
+#[derive(Deserialize)]
+struct SendEmailRequest {
+	subject: String,
+	body: String,
+	to: String,
+}
+
+async fn send_email(
+	Extension(email): Extension<Email>,
+	Json(payload): Json<SendEmailRequest>,
+) -> APIResponse<GenericMessage> {
+	if !email.is_available() {
+		return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Email not enabled.")))
+	}
+	
+
+	println!("Sending email!");
+	let result = email.send(&payload.subject, &payload.to, &payload.body).await;
+	println!("Done!");
+
+	match result {
+		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("OK"))),
+		Err(e) => {
+			println!("email error {:#?}", e);
+			Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to send email.")))
+		}
+	}	
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
@@ -343,5 +372,6 @@ pub fn user_router() -> Router {
 		.route("/me", get(user_profile))
 		.route("/me/links", get(my_links))
         .route("/me/password", post(update_password))
+		.route("/email", post(send_email))
 		
 }
