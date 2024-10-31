@@ -44,12 +44,12 @@ async fn asset_handler(uri: axum::http::Uri) -> Response {
 
 
 async fn create_scheduler(pool: &DbPool) -> Result<(), JobSchedulerError> {
-    let mut scheduler = JobScheduler::new().await?;
+    let scheduler = JobScheduler::new().await?;
+    let pool_clone = pool.clone();
 
     scheduler.add(
-        Job::new("0 * * * *", |_, _| {
-            let pool_clone = pool.clone();
-            match VerificationToken::delete_expired_pooled(pool_clone) {
+        Job::new("* 0 0 * * *", move |_, _| {
+            match VerificationToken::delete_expired_pooled(&pool_clone) {
                 Ok(_) => log::debug!("Deleted expired verification tokens."),
                 Err(e) => log::error!("Failed to delete expired verification tokens: {:#?}", e),
             }

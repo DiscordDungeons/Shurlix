@@ -20,7 +20,7 @@ impl VerificationToken {
             .execute(conn)
     }
 
-    pub fn delete_expired_pooled(pool: DbPool) -> Result<usize, diesel::result::Error> {
+    pub fn delete_expired_pooled(pool: &DbPool) -> Result<usize, diesel::result::Error> {
         let mut conn: diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>> = match pool.clone().get() {
             Ok(conn) => conn,
             Err(e) => {
