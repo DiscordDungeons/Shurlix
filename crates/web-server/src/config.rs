@@ -1,8 +1,10 @@
 use std::str::FromStr;
 
 use dotenvy::dotenv;
+use humantime::parse_duration;
 use owo_colors::OwoColorize;
 use zxcvbn::Score;
+use chrono::Duration;
 
 #[derive(Clone, Debug)]
 pub struct SmtpConfig {
@@ -23,7 +25,22 @@ pub struct Config {
     pub min_password_strength: Score,
     pub allow_registering: bool,
     pub base_url: String,
+    pub enable_email_verification: bool,
+    pub email_verification_ttl: Duration,
     pub smtp: SmtpConfig,
+}
+
+#[derive(Debug)]
+struct WrappedDuration(Duration);
+
+impl FromStr for WrappedDuration {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse_duration(s)
+            .map(|d| WrappedDuration(Duration::seconds(d.as_secs() as i64)))
+            .map_err(|_| format!("Failed to parse '{}' as a Duration", s))
+    }
 }
 
 impl Config {
@@ -115,10 +132,14 @@ impl Config {
         let base_url = Config::get_var_required::<String>("BASE_URL");
         let allow_anonymous_shorten = Config::get_var_required::<bool>("ALLOW_ANOYMOUS_SHORTEN");
         let allow_registering = Config::get_var_required::<bool>("ALLOW_REGISTERING");
+        let enable_email_verification = Config::get_var_required::<bool>("ALLOW_REGISTERING");
+        let email_verification_ttl = Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
+
+        // TODO: Require smtp to be enabled if enable_email_verification is true
 
         let min_password_strength = match Score::try_from(min_password_strength) {
             Ok(score) => score,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "MIN_PASSWORD_STRENGTH".yellow(), e),
+            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ENABLE_EMAIL_VERIFICATION".yellow(), e),
         };
         
 
@@ -129,6 +150,8 @@ impl Config {
             jwt_secret,
             min_password_strength,
             allow_registering,
+            enable_email_verification,
+            email_verification_ttl: email_verification_ttl.0,
             base_url,
             smtp: Config::get_smtp_config(),
         }

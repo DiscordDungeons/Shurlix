@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use chrono::NaiveDateTime;
 use serde::Serialize;
 
-use crate::{DbConnection, DbPool};
+use crate::{schema::verification_tokens, DbConnection, DbPool};
 
 #[derive(Debug, Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::verification_tokens)]
@@ -31,5 +31,25 @@ impl VerificationToken {
 
         diesel::sql_query("SELECT delete_expired_tokens();")
             .execute(&mut conn)
+    }
+}
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = crate::schema::verification_tokens)]
+pub struct NewVerificationToken {
+    pub user_id: i32,
+    pub token: String,
+    pub expires_at: NaiveDateTime,
+}
+
+impl NewVerificationToken {
+    pub fn insert(&self, conn: &mut DbConnection) -> VerificationToken {
+        let token = diesel::insert_into(verification_tokens::table)
+            .values(self)
+            .returning(VerificationToken::as_returning())
+            .get_result(conn)
+            .expect("Error saving new verification token");
+
+        token
     }
 }

@@ -1,5 +1,6 @@
 use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router, extract::Query};
-use db::{models::{Link, NewUser, SanitizedUser, User}, DbPool};
+use chrono::Utc;
+use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, User}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +15,7 @@ use argon2::{
 };
 use zxcvbn::{feedback::{Suggestion, Warning}, zxcvbn, Entropy, Score};
 
-use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::Email, util::jwt::encode_user_token};
+use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::Email, util::{generate_unique_string, jwt::encode_user_token}};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -137,8 +138,7 @@ async fn register_user(
 
 	let argon2 = Argon2::default();
 
-	// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
-
+	
 	// Hash password to PHC string ($argon2id$v=19$...)
 	let password_hash = match argon2.hash_password(&payload.password.into_bytes(), &salt) {
 		Ok(hash) => hash.to_string(),
@@ -152,6 +152,19 @@ async fn register_user(
 	};
 
 	let user = new_user.insert(conn);
+
+	// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
+
+	if config.enable_email_verification {
+		let new_token = NewVerificationToken {
+			user_id: user.id,
+			token: generate_unique_string(32),
+			expires_at: (Utc::now() + config.email_verification_ttl).naive_utc(),
+		};
+
+		new_token.insert(conn);
+	}
+
 
 	let registered_user = RegisteredUser {
 		email: user.email,
@@ -201,7 +214,7 @@ async fn login_user(
 				.secure(false) // Only send over HTTPS
 				.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
 				.path("/") // Path for which the cookie is valid
-				.max_age(time::Duration::hours(1)) // Set cookie expiration
+				.max_age(time::Duration::hours(1))
 				.build();
 
 			let jar2 = jar.add(cookie);
