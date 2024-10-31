@@ -5,6 +5,7 @@ mod common;
 mod asset;
 mod constants;
 mod extensions;
+mod services;
 
 use asset::Asset;
 use common::GenericMessage;

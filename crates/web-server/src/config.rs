@@ -1,6 +1,17 @@
+use std::str::FromStr;
+
 use dotenvy::dotenv;
 use owo_colors::OwoColorize;
 use zxcvbn::Score;
+
+#[derive(Clone, Debug)]
+pub struct SmtpConfig {
+    pub enabled: bool,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub from: Option<String>,
+    pub host: Option<String>,
+}
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -11,43 +22,95 @@ pub struct Config {
     pub min_password_strength: Score,
     pub allow_registering: bool,
     pub base_url: String,
+    pub smtp: SmtpConfig,
 }
 
-// TODO: Improve this code
 impl Config {
+
+    pub fn get_var_required<T>(name: &str) -> T
+    where
+        T: FromStr,
+        T::Err: std::fmt::Debug,
+    {
+        let value = std::env::var(name).expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env"));
+    
+        if value == "" {
+            panic!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env");
+        }
+
+        match value.parse::<T>() {
+            Ok(n) => n,
+            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), name.yellow(), e),
+        }
+    }
+
+    pub fn get_var<T>(name: &str) -> Option<T>
+    where
+        T: FromStr,
+        T::Err: std::fmt::Debug,
+    {
+        let value = std::env::var(name);
+
+        match value {
+            Ok(value) => {
+                match value.parse::<T>() {
+                    Ok(n) => Some(n),
+                    Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), name.yellow(), e),
+                }
+            },
+            Err(_) => None
+        }
+    }
+
+    pub fn get_smtp_config() -> SmtpConfig {
+        let enabled = Config::get_var::<bool>("SMTP_ENABLED").unwrap_or(false);
+
+        let username = Config::get_var::<String>("SMTP_USERNAME");
+        let password = Config::get_var::<String>("SMTP_PASSWORD");
+        let from = Config::get_var::<String>("SMTP_FROM");
+        let host = Config::get_var::<String>("SMTP_HOST");
+
+        if enabled {
+            let mut missing_vars = vec![];
+
+            for (name, value) in [
+                ("SMTP_USERNAME", &username),
+                ("SMTP_PASSWORD", &password),
+                ("SMTP_FROM", &from),
+                ("SMTP_HOST", &host),
+            ] {
+                if value.is_none() || value.clone().is_some_and(|val| val == "") {
+                    missing_vars.push(name);
+                }
+            }
+
+            if !missing_vars.is_empty() {
+                for name in &missing_vars {
+                    eprintln!("{} {} is required if SMTP is enabled", "[CONFIG ERROR]".bright_red(), name.yellow());
+                }
+                panic!("{} {} missing required environment variables for SMTP configuration", "[CONFIG ERROR]".bright_red(), "✗".red().bold());
+            }
+        }
+
+        SmtpConfig {
+            enabled,
+            username,
+            password,
+            from,
+            host,
+        }
+    }
 
     pub fn new() -> Config {
         dotenv().ok();
 
-        let database_url = std::env::var("DATABASE_URL").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), "DATABASE_URL".yellow(), "not set in .env"));
-        let shortened_link_length = std::env::var("SHORTENED_LINK_LENGTH").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "SHORTENED_LINK_LENGTH".yellow(), "not set in .env"));
-        let jwt_secret = std::env::var("JWT_SECRET").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "JWT_SECRET".yellow(), "not set in .env"));
-        let min_password_strength = std::env::var("MIN_PASSWORD_STRENGTH").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "MIN_PASSWORD_STRENGTH".yellow(), "not set in .env"));
-        let base_url = std::env::var("BASE_URL").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "BASE_URL".yellow(), "not set in .env"));
-
-        let shortened_link_length = match shortened_link_length.parse::<usize>() {
-            Ok(n) => n,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "SHORTENED_LINK_LENGTH".yellow(), e),
-        };
-
-        let allow_anonymous_shorten = std::env::var("ALLOW_ANOYMOUS_SHORTEN").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ALLOW_ANOYMOUS_SHORTEN".yellow(), "not set in .env"));
-
-        let allow_anonymous_shorten = match allow_anonymous_shorten.parse::<bool>() {
-            Ok(n) => n,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ALLOW_ANOYMOUS_SHORTEN".yellow(), e),
-        };
-
-        let min_password_strength = match min_password_strength.parse::<u8>() {
-            Ok(n) => n,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "MIN_PASSWORD_STRENGTH".yellow(), e),
-        };
-
-        let allow_registering = std::env::var("ALLOW_REGISTERING").expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ALLOW_REGISTERING".yellow(), "not set in .env"));
-
-        let allow_registering = match allow_registering.parse::<bool>() {
-            Ok(n) => n,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ALLOW_REGISTERING".yellow(), e),
-        };
+        let database_url = Config::get_var_required::<String>("DATABASE_URL");
+        let shortened_link_length = Config::get_var_required::<usize>("SHORTENED_LINK_LENGTH");
+        let jwt_secret = Config::get_var_required::<String>("JWT_SECRET");
+        let min_password_strength = Config::get_var_required::<u8>("MIN_PASSWORD_STRENGTH");
+        let base_url = Config::get_var_required::<String>("BASE_URL");
+        let allow_anonymous_shorten = Config::get_var_required::<bool>("ALLOW_ANOYMOUS_SHORTEN");
+        let allow_registering = Config::get_var_required::<bool>("ALLOW_REGISTERING");
 
         let min_password_strength = match Score::try_from(min_password_strength) {
             Ok(score) => score,
@@ -63,6 +126,7 @@ impl Config {
             min_password_strength,
             allow_registering,
             base_url,
+            smtp: Config::get_smtp_config(),
         }
     }
 }

@@ -197,6 +197,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] Proper docs
 - [ ] User interface
     - [x] Login / Create user
+        - [ ] Email verification
     - [x] Enable / Disable user creation
     - [ ] Dashboard
         - [x] Links dashboard (overview, deletion, etc)
