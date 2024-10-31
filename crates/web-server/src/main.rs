@@ -9,11 +9,14 @@ mod services;
 
 use asset::Asset;
 use common::GenericMessage;
-use db::{models::Link, DbPool};
+use db::{models::{Link, VerificationToken}, DbPool};
 use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use mime_guess::from_path;
 use services::email::Email;
 use std::net::SocketAddr;
+
+
+use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
 async fn asset_handler(uri: axum::http::Uri) -> Response {
     let path = uri.clone().to_string().replace("/assets/", "");
@@ -40,6 +43,32 @@ async fn asset_handler(uri: axum::http::Uri) -> Response {
 }
 
 
+async fn create_scheduler(pool: &DbPool) -> Result<(), JobSchedulerError> {
+    let mut scheduler = JobScheduler::new().await?;
+
+    let conn = &mut pool.get().map_err(|e| {
+        e.to_string()
+    });
+
+    if conn.is_err() {
+        eprintln!("Failed to get DB pool for creating jobs.");
+        return Ok(());
+    }
+    
+    scheduler.add(
+        Job::new("0 * * * *", |_, _| {
+            match VerificationToken::delete_expired(conn) {
+                Ok(_) => log::debug!("Deleted expired verification tokens."),
+                Err(e) => log::error!("Failed to delete expired verification tokens: {:#?}", e),
+            }
+        })?
+    ).await?;
+
+    scheduler.start().await?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::init();
@@ -57,6 +86,10 @@ async fn main() {
 
     db::run_migrations(&pool.clone());
 
+    match create_scheduler(&pool).await {
+        Ok(_) => {},
+        Err(e) => eprintln!("Failed to create scheduler: {:#?}", e)
+    }
 
     // build our application with a route
     let app = Router::new()
@@ -72,7 +105,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     log::info!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    axum::serve(listener, app.into_make_service()).await.unwrap();
+    axum::serve(listener, app.into_make_service()).await.unwrap()
 }
 
 async fn index() -> impl IntoResponse {

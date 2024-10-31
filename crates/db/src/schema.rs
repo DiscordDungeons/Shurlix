@@ -29,9 +29,22 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    verification_tokens (id) {
+        id -> Int4,
+        user_id -> Int4,
+        #[max_length = 255]
+        token -> Varchar,
+        created_at -> Timestamp,
+        expires_at -> Timestamp,
+    }
+}
+
 diesel::joinable!(links -> users (owner_id));
+diesel::joinable!(verification_tokens -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     links,
     users,
+    verification_tokens,
 );
