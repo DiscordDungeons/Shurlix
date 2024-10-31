@@ -1,8 +1,10 @@
 use diesel::prelude::*;
-use chrono::NaiveDateTime;
+use chrono::{Local, NaiveDateTime};
 use serde::Serialize;
 
-use crate::{schema::verification_tokens, DbConnection, DbPool};
+use crate::{schema::{users, verification_tokens}, DbConnection, DbPool};
+
+use super::User;
 
 #[derive(Debug, Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::verification_tokens)]
@@ -31,6 +33,24 @@ impl VerificationToken {
 
         diesel::sql_query("SELECT delete_expired_tokens();")
             .execute(&mut conn)
+    }
+
+    pub fn get_by_token(token: String, conn: &mut DbConnection) -> Result<Vec<(VerificationToken, User)>, diesel::result::Error> {
+        verification_tokens::table
+            .filter(verification_tokens::token.eq(token))
+            .inner_join(users::table.on(verification_tokens::user_id.eq(users::id)))
+            .select((verification_tokens::all_columns, users::all_columns))
+            .load::<(VerificationToken, User)>(conn)
+    }
+
+    pub fn is_expired(&self) -> bool {
+        let now = Local::now().naive_utc();
+        now > self.expires_at
+    }
+
+    pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::delete(verification_tokens::table.filter(verification_tokens::id.eq(self.id)))
+            .execute(conn)
     }
 }
 

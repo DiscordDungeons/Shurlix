@@ -84,6 +84,12 @@ impl User {
         .set(users::password_hash.eq(password_hash))
         .execute(conn)
     }
+
+    pub fn set_verified_at(&self, verified_at: Option<NaiveDateTime>, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::update(users::table.find(self.id))
+            .set(users::verified_at.eq(verified_at))
+            .execute(conn)
+    }
 }
 
 

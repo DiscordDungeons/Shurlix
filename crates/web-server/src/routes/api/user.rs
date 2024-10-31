@@ -1,6 +1,6 @@
-use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router, extract::Query};
+use axum::{extract::{Path, Query}, http::StatusCode, routing::{get, post}, Extension, Json, Router};
 use chrono::Utc;
-use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, User}, DbPool};
+use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, User, VerificationToken}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
@@ -346,6 +346,39 @@ async fn update_password(
     }
 }
 
+async fn validate_email(
+	Extension(config): Extension<Config>,
+	Extension(pool): Extension<DbPool>,
+    Path(token): Path<String>,
+) -> APIResponse<GenericMessage> {
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	let records = VerificationToken::get_by_token(token, conn).map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to get token."))
+    })?;
+
+	if records.len() == 0 {
+		return Err((StatusCode::NOT_FOUND, GenericMessage::new("Token expired or invalid.")))
+	}
+
+	let (token, user) = records.get(0).unwrap();
+
+	if token.is_expired() {
+		return Err((StatusCode::NOT_FOUND, GenericMessage::new("Token expired or invalid.")))
+	}
+
+	let _ = token.delete(conn);
+
+	user.set_verified_at(Some(Utc::now().naive_utc()), conn).map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to set verified at."))
+    })?;
+
+
+	Ok((StatusCode::OK, GenericMessage::new("Email verified.")))
+}
+
 #[derive(Deserialize)]
 struct SendEmailRequest {
 	subject: String,
@@ -385,6 +418,7 @@ pub fn user_router() -> Router {
 		.route("/me", get(user_profile))
 		.route("/me/links", get(my_links))
         .route("/me/password", post(update_password))
+		.route("/verify/:token", get(validate_email))
 		.route("/email", post(send_email))
 		
 }
