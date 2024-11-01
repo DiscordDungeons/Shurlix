@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
+use chrono::Duration;
 use dotenvy::dotenv;
 use humantime::parse_duration;
 use owo_colors::OwoColorize;
 use zxcvbn::Score;
-use chrono::Duration;
 
 #[derive(Clone, Debug)]
 pub struct SmtpConfig {
@@ -31,7 +31,7 @@ pub struct Config {
 }
 
 #[derive(Debug)]
-struct WrappedDuration(Duration);
+struct WrappedDuration(chrono::Duration);
 
 impl FromStr for WrappedDuration {
     type Err = String;
@@ -44,21 +44,38 @@ impl FromStr for WrappedDuration {
 }
 
 impl Config {
-
     pub fn get_var_required<T>(name: &str) -> T
     where
         T: FromStr,
         T::Err: std::fmt::Debug,
     {
-        let value = std::env::var(name).expect(&format!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env"));
-    
+        let value = std::env::var(name).expect(&format!(
+            "{} {} {} {}",
+            "[CONFIG ERROR]".bright_red(),
+            "✗ ".red().bold(),
+            name.yellow(),
+            "not set in .env"
+        ));
+
         if value == "" {
-            panic!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env");
+            panic!(
+                "{} {} {} {}",
+                "[CONFIG ERROR]".bright_red(),
+                "✗ ".red().bold(),
+                name.yellow(),
+                "not set in .env"
+            );
         }
 
         match value.parse::<T>() {
             Ok(n) => n,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), name.yellow(), e),
+            Err(e) => panic!(
+                "{} {} Failed to parse {}: {:?}",
+                "[CONFIG ERROR]".bright_red(),
+                "✗".red().bold(),
+                name.yellow(),
+                e
+            ),
         }
     }
 
@@ -70,13 +87,17 @@ impl Config {
         let value = std::env::var(name);
 
         match value {
-            Ok(value) => {
-                match value.parse::<T>() {
-                    Ok(n) => Some(n),
-                    Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), name.yellow(), e),
-                }
+            Ok(value) => match value.parse::<T>() {
+                Ok(n) => Some(n),
+                Err(e) => panic!(
+                    "{} {} Failed to parse {}: {:?}",
+                    "[CONFIG ERROR]".bright_red(),
+                    "✗".red().bold(),
+                    name.yellow(),
+                    e
+                ),
             },
-            Err(_) => None
+            Err(_) => None,
         }
     }
 
@@ -106,9 +127,17 @@ impl Config {
 
             if !missing_vars.is_empty() {
                 for name in &missing_vars {
-                    eprintln!("{} {} is required if SMTP is enabled", "[CONFIG ERROR]".bright_red(), name.yellow());
+                    eprintln!(
+                        "{} {} is required if SMTP is enabled",
+                        "[CONFIG ERROR]".bright_red(),
+                        name.yellow()
+                    );
                 }
-                panic!("{} {} missing required environment variables for SMTP configuration", "[CONFIG ERROR]".bright_red(), "✗".red().bold());
+                panic!(
+                    "{} {} missing required environment variables for SMTP configuration",
+                    "[CONFIG ERROR]".bright_red(),
+                    "✗".red().bold()
+                );
             }
         }
 
@@ -133,15 +162,21 @@ impl Config {
         let allow_anonymous_shorten = Config::get_var_required::<bool>("ALLOW_ANOYMOUS_SHORTEN");
         let allow_registering = Config::get_var_required::<bool>("ALLOW_REGISTERING");
         let enable_email_verification = Config::get_var_required::<bool>("ALLOW_REGISTERING");
-        let email_verification_ttl = Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
+        let email_verification_ttl =
+            Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
 
         // TODO: Require smtp to be enabled if enable_email_verification is true
 
         let min_password_strength = match Score::try_from(min_password_strength) {
             Ok(score) => score,
-            Err(e) => panic!("{} {} Failed to parse {}: {:?}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), "ENABLE_EMAIL_VERIFICATION".yellow(), e),
+            Err(e) => panic!(
+                "{} {} Failed to parse {}: {:?}",
+                "[CONFIG ERROR]".bright_red(),
+                "✗".red().bold(),
+                "ENABLE_EMAIL_VERIFICATION".yellow(),
+                e
+            ),
         };
-        
 
         Config {
             database_url,

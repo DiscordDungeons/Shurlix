@@ -108,6 +108,7 @@ impl From<Entropy> for CheckPasswordResponse {
 async fn register_user(
     Extension(pool): Extension<DbPool>,
     Extension(config): Extension<Config>,
+    Extension(email): Extension<Email>,
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
 	// TODO: Password requirements
@@ -146,9 +147,9 @@ async fn register_user(
 	};
 
 	let new_user = NewUser {
-		email: payload.email,
+		email: payload.email.clone(),
 		password_hash,
-		username: payload.username,
+		username: payload.username.clone(),
 	};
 
 	let user = new_user.insert(conn);
@@ -156,13 +157,40 @@ async fn register_user(
 	// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
 
 	if config.enable_email_verification {
+		let verification_token = generate_unique_string(32);
+
 		let new_token = NewVerificationToken {
 			user_id: user.id,
-			token: generate_unique_string(32),
+			token: verification_token.clone(),
 			expires_at: (Utc::now() + config.email_verification_ttl).naive_utc(),
 		};
 
 		new_token.insert(conn);
+
+		if email.is_available() {
+			tokio::spawn(async move {
+				let _ = email.send(
+					"Please verify your email",
+					&payload.email,
+					format!(
+						r#"Hello {},
+						Thank you for signing up! Please verify your email address to complete your registration.
+
+						Verification Link:
+						{}/api/user/verify/{}
+
+						Clicking the link above will confirm your email and activate your account. This link is valid for the next {}.
+
+						If you didn't create an account, you can safely ignore this email.
+						"#,
+						&payload.username,
+						config.base_url,
+						verification_token,
+						humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
+					).as_str()
+				).await;
+			});
+		}
 	}
 
 
@@ -347,7 +375,6 @@ async fn update_password(
 }
 
 async fn validate_email(
-	Extension(config): Extension<Config>,
 	Extension(pool): Extension<DbPool>,
     Path(token): Path<String>,
 ) -> APIResponse<GenericMessage> {
@@ -355,7 +382,7 @@ async fn validate_email(
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
-	let records = VerificationToken::get_by_token(token, conn).map_err(|e| {
+	let records = VerificationToken::get_by_token(token, conn).map_err(|_| {
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to get token."))
     })?;
 
@@ -371,7 +398,7 @@ async fn validate_email(
 
 	let _ = token.delete(conn);
 
-	user.set_verified_at(Some(Utc::now().naive_utc()), conn).map_err(|e| {
+	user.set_verified_at(Some(Utc::now().naive_utc()), conn).map_err(|_| {
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to set verified at."))
     })?;
 

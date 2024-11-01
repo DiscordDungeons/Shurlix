@@ -1,5 +1,5 @@
 use lettre::{
-	address::AddressError, message::Mailbox, transport::smtp::{authentication::Credentials}, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor
+	message::Mailbox, transport::smtp::authentication::{Credentials, Mechanism}, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor
 };
 use std::error::Error;
 
@@ -29,8 +29,10 @@ impl Email {
 			config.password.unwrap(),
 		);
 
+		// TODO: Config for whether or not to use starttls?
 
-		let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(config.host.unwrap().as_str())?
+		let mailer = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(config.host.unwrap().as_str())?
+			.authentication(vec![Mechanism::Login])
 			.credentials(smtp_credentials)
 			.port(config.port.unwrap())
 			.build();
