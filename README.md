@@ -202,7 +202,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [x] Enable / Disable user creation
     - [ ] Dashboard
         - [x] Links dashboard (overview, deletion, etc)
-        - [ ] User settings
+        - [x] User settings
             - [x] Update email & username
             - [x] Change password
             - [x] Delete account
