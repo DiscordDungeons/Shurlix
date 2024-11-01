@@ -41,7 +41,9 @@ async fn asset_handler(uri: axum::http::Uri) -> Response {
         }
     }
 }
-
+async fn index() -> impl IntoResponse {
+    axum::response::Html(include_str!("../static/index.html")) // Serve your index.html
+}
 
 async fn create_scheduler(pool: &DbPool) -> Result<(), JobSchedulerError> {
     let scheduler = JobScheduler::new().await?;
@@ -86,6 +88,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(index))
+        .route("/dash/*path", get(index))
         .route("/assets/*path", get(asset_handler))
         .route("/:slug", get(handle_slug))
         .nest("/api", routes::api::api_router())
@@ -100,9 +103,7 @@ async fn main() {
     axum::serve(listener, app.into_make_service()).await.unwrap()
 }
 
-async fn index() -> impl IntoResponse {
-    axum::response::Html(include_str!("../static/index.html")) // Serve your index.html
-}
+
 
 async fn handle_slug(
     Extension(pool): Extension<DbPool>,
