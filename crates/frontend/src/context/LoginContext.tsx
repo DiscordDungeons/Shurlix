@@ -2,7 +2,6 @@ import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
 import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
 import { useLocation } from 'preact-iso'
-import { deleteCookie } from '../util/cookies'
 import { toast } from 'react-toastify'
 
 type User = {
@@ -19,6 +18,11 @@ type LoginResponse = {
 	user: User,
 }
 
+type UpdateUser = {
+	username: string | null,
+	email: string | null,
+}
+
 
 export type ILoginContext = {
 	user: User | null,
@@ -33,6 +37,8 @@ export type ILoginContext = {
 	deleteAccount: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	updateUser: (values: UpdateUser) => Promise<void>,
 }
 
 export const LoginContext = createContext<ILoginContext>(null)
@@ -125,6 +131,19 @@ export const LoginContextProvider = ({
 		})
 	}
 
+	const updateUser = async (values: UpdateUser) => {
+		await simpleDataPost('/api/user/me/update', values, () => {
+			toast.success('User updated.')
+			setUser({
+				...user,
+				email: values.email || user.email,
+				username: values.username || user.username,
+			})
+		}).catch((e: APIError) => {
+			toast.error(`Failed to update user: ${e.message}`)
+		})
+	}
+
 	return (
 		<LoginContext.Provider
 			value={{
@@ -138,6 +157,7 @@ export const LoginContextProvider = ({
 				fetchMe,
 				deleteAccount,
 				changePassword,
+				updateUser,
 			}}
 		>
 			{children}

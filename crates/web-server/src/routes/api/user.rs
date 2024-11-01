@@ -1,6 +1,6 @@
 use axum::{extract::{Path, Query}, http::StatusCode, routing::{delete, get, post}, Extension, Json, Router};
 use chrono::Utc;
-use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, User, VerificationToken}, DbPool};
+use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, UpdateUser, User, VerificationToken}, DbPool};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
@@ -15,7 +15,7 @@ use argon2::{
 };
 use zxcvbn::{feedback::{Suggestion, Warning}, zxcvbn, Entropy, Score};
 
-use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::Email, util::{generate_unique_string, jwt::encode_user_token}};
+use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::{templates::VerificationEmail, Email}, util::{generate_unique_string, jwt::encode_user_token}};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -81,6 +81,12 @@ struct PaginatedLinks {
 	total_count: i64,
 }
 
+#[derive(Deserialize)]
+struct UserUpdateRequest {
+	username: Option<String>,
+	email: Option<String>,
+}
+
 impl From<Entropy> for CheckPasswordResponse {
 	fn from(value: Entropy) -> Self {
 		
@@ -111,7 +117,6 @@ async fn register_user(
     Extension(email): Extension<Email>,
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
-	// TODO: Password requirements
 	if !EmailAddress::is_valid(&payload.email) {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
 	}
@@ -169,26 +174,12 @@ async fn register_user(
 
 		if email.is_available() {
 			tokio::spawn(async move {
-				let _ = email.send(
-					"Please verify your email",
-					&payload.email,
-					format!(
-						r#"Hello {},
-						Thank you for signing up! Please verify your email address to complete your registration.
-
-						Verification Link:
-						{}/api/user/verify/{}
-
-						Clicking the link above will confirm your email and activate your account. This link is valid for the next {}.
-
-						If you didn't create an account, you can safely ignore this email.
-						"#,
-						&payload.username,
-						config.base_url,
-						verification_token,
-						humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
-					).as_str()
-				).await;
+				let _ = email.send_template::<VerificationEmail>(&payload.email, &VerificationEmail {
+					base_url: &config.base_url,
+					username: &payload.username,
+					verification_token: verification_token.as_str(),
+					ttl: format!("{}", humantime::format_duration(config.email_verification_ttl.to_std().unwrap())).as_str(),
+				}).await;
 			});
 		}
 	}
@@ -426,6 +417,92 @@ async fn delete_me(
 	}
 }
 
+// TODO: Ask for password?
+async fn update_user(
+	AuthedUser(user): AuthedUser,
+    Extension(email): Extension<Email>,
+    Extension(config): Extension<Config>,
+	Extension(pool): Extension<DbPool>,
+	Json(payload): Json<UserUpdateRequest>,
+) -> APIResponse<GenericMessage> {
+	if user.is_none() {
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
+
+	let user = user.unwrap();
+
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	let mut update_user = UpdateUser {
+		email: None,
+		username: None,
+		verified_at: None,
+	};
+
+	match payload.email {
+		Some(email) => {
+			if User::email_exists(&email, conn) {
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
+			}
+
+			if !EmailAddress::is_valid(&email) {
+				return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
+			}
+
+			update_user.email = Some(email.clone());
+		}
+		None => {}
+	}
+
+	match payload.username {
+		Some(username) => {
+			if User::username_exists(&username, conn) {
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Username already in use")));
+			}
+
+			update_user.username = Some(username.clone());
+		},
+		None => {}
+	}
+
+	// TODO: Make this less ugly
+
+	match user.update(update_user.clone(), conn) {
+		Ok(_) => {
+			let email_username = match update_user.username.clone() {
+				Some(username) => username,
+				None => user.username,
+			};
+
+			let verification_token = generate_unique_string(32);
+
+			let new_token = NewVerificationToken {
+				user_id: user.id,
+				token: verification_token.clone(),
+				expires_at: (Utc::now() + config.email_verification_ttl).naive_utc(),
+			};
+		
+			new_token.insert(conn);
+
+			if update_user.email.is_some() && email.is_available() {
+				tokio::spawn(async move {
+					let _ = email.send_template::<VerificationEmail>(&update_user.email.unwrap(), &VerificationEmail {
+						base_url: &config.base_url,
+						username: &email_username,
+						verification_token: verification_token.as_str(),
+						ttl: format!("{}", humantime::format_duration(config.email_verification_ttl.to_std().unwrap())).as_str(),
+					}).await;
+				});
+			}
+			
+			Ok((StatusCode::OK, GenericMessage::new("Updated.")))
+		},
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to update user.")))
+	}
+}
+
 // Starts at /api/user
 pub fn user_router() -> Router {
      Router::new()
@@ -436,6 +513,7 @@ pub fn user_router() -> Router {
 		.route("/me", get(user_profile))
 		.route("/me", delete(delete_me))
 		.route("/me/links", get(my_links))
+		.route("/me/update", post(update_user))
         .route("/me/password", post(update_password))
 		.route("/verify/:token", get(validate_email))
 		

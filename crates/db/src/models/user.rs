@@ -16,6 +16,14 @@ pub struct User {
     pub deleted_at: Option<NaiveDateTime>
 }
 
+#[derive(AsChangeset, Clone, Debug)]
+#[diesel(table_name = crate::schema::users)]
+pub struct UpdateUser {
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub verified_at: Option<NaiveDateTime>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct SanitizedUser {
     pub id: i32,
@@ -97,6 +105,12 @@ impl User {
                 users::id.eq(self.id)
             )
         ).execute(conn)
+    }
+
+    pub fn update(&self, values: UpdateUser, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::update(users::table.find(self.id))
+            .set(&values)
+            .execute(conn)
     }
 }
 

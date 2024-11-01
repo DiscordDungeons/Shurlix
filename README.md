@@ -198,16 +198,18 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] User interface
     - [x] Login / Create user
         - [x] Email verification
+        - [ ] 2fa
     - [x] Enable / Disable user creation
     - [ ] Dashboard
         - [x] Links dashboard (overview, deletion, etc)
         - [ ] User settings
-            - [ ] Update email & username
+            - [x] Update email & username
             - [x] Change password
             - [x] Delete account
 - [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links
+        - [ ] Handle multiple urls
         - [x] Create links
         - [ ] Read links
             - [ ] By user

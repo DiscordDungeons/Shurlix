@@ -5,13 +5,15 @@ import { LoginContext } from '../../context/LoginContext'
 import { Modal } from '../../components/Modal'
 
 const InternalUserPage = () => {
-	const { changePassword, deleteAccount, isDeletingAccount } = useContext(LoginContext)
+	const { changePassword, deleteAccount, isDeletingAccount, updateUser } = useContext(LoginContext)
 	const [ isDeletionModalOpen, setDeletionModalOpen ] = useState(false)
 
 	const [ formData, setFormData ] = useState({
 		currentPassword: '',
 		newPassword: '',
 		confirmPassword: '',
+		username: '',
+		email: '',
 	})
 
 	const handleChange = (e) => {
@@ -26,6 +28,15 @@ const InternalUserPage = () => {
 
 		changePassword(formData.currentPassword, formData.newPassword, formData.confirmPassword)
 	}
+
+	const onUpdateAccount = (e) => {
+		e.preventDefault()
+
+		updateUser({
+			email: formData.email === '' ? null : formData.email,
+			username: formData.username === '' ? null : formData.username,
+		})
+	} 
 
 	return (
 		<Dashboard>
@@ -63,13 +74,16 @@ const InternalUserPage = () => {
 
 						{/* Right Column */}
 						<div>
-							<form>
+							<form onSubmit={onUpdateAccount}>
 								<div class="mb-4">
 									<label class="block text-gray-700 mb-2" for="username">Username</label>
 									<input
 										id="username"
+										name="username"
 										type="text"
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										onChange={handleChange}
+										value={formData.username}
 									/>
 								</div>
 			
@@ -79,8 +93,11 @@ const InternalUserPage = () => {
 									<label class="block text-gray-700 mb-2" for="email">Email</label>
 									<input
 										id="email"
+										name="email"
 										type="email"
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										onChange={handleChange}
+										value={formData.email}
 									/>
 								</div>
 
