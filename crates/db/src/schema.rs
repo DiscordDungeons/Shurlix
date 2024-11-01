@@ -1,8 +1,19 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    domains (id) {
+        id -> Int4,
+        #[max_length = 255]
+        domain -> Varchar,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
     links (id) {
         id -> Int4,
+        domain_id -> Int4,
         #[max_length = 255]
         slug -> Varchar,
         #[max_length = 255]
@@ -40,10 +51,12 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(links -> domains (domain_id));
 diesel::joinable!(links -> users (owner_id));
 diesel::joinable!(verification_tokens -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    domains,
     links,
     users,
     verification_tokens,
