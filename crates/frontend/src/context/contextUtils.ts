@@ -65,3 +65,4 @@ export const simpleDelete = async <T>(url: string, setFn: (data: T) => void): Pr
 		throw new APIError(data.message, request.status)
 	}
 }
+

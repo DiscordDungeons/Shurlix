@@ -1,4 +1,4 @@
-use axum::{extract::{Path, Query}, http::StatusCode, routing::{get, post}, Extension, Json, Router};
+use axum::{extract::{Path, Query}, http::StatusCode, routing::{delete, get, post}, Extension, Json, Router};
 use chrono::Utc;
 use db::{models::{Link, NewUser, NewVerificationToken, SanitizedUser, User, VerificationToken}, DbPool};
 use email_address::EmailAddress;
@@ -406,33 +406,24 @@ async fn validate_email(
 	Ok((StatusCode::OK, GenericMessage::new("Email verified.")))
 }
 
-#[derive(Deserialize)]
-struct SendEmailRequest {
-	subject: String,
-	body: String,
-	to: String,
-}
-
-async fn send_email(
-	Extension(email): Extension<Email>,
-	Json(payload): Json<SendEmailRequest>,
+async fn delete_me(
+	AuthedUser(user): AuthedUser,
+	Extension(pool): Extension<DbPool>,
 ) -> APIResponse<GenericMessage> {
-	if !email.is_available() {
-		return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Email not enabled.")))
+	if user.is_none() {
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
+
+	let user = user.unwrap();
+
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	match user.delete(conn) {
+		Ok(_) =>  Ok((StatusCode::OK, GenericMessage::new("Deleted."))),
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to delete user.")))
 	}
-	
-
-	println!("Sending email!");
-	let result = email.send(&payload.subject, &payload.to, &payload.body).await;
-	println!("Done!");
-
-	match result {
-		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("OK"))),
-		Err(e) => {
-			println!("email error {:#?}", e);
-			Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to send email.")))
-		}
-	}	
 }
 
 // Starts at /api/user
@@ -443,9 +434,9 @@ pub fn user_router() -> Router {
         .route("/login", post(login_user))
         .route("/logout", post(logout_user))
 		.route("/me", get(user_profile))
+		.route("/me", delete(delete_me))
 		.route("/me/links", get(my_links))
         .route("/me/password", post(update_password))
 		.route("/verify/:token", get(validate_email))
-		.route("/email", post(send_email))
 		
 }

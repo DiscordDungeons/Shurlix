@@ -90,6 +90,14 @@ impl User {
             .set(users::verified_at.eq(verified_at))
             .execute(conn)
     }
+
+    pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+        diesel::delete(
+            users::table.filter(
+                users::id.eq(self.id)
+            )
+        ).execute(conn)
+    }
 }
 
 

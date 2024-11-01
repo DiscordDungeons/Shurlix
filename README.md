@@ -204,7 +204,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
         - [ ] User settings
             - [ ] Update email & username
             - [x] Change password
-            - [ ] Delete account
+            - [x] Delete account
 - [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links

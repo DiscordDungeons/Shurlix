@@ -1,6 +1,6 @@
 import { createContext } from 'preact'
 import { useState } from 'preact/hooks'
-import { APIError, simpleDataFetch, simpleDataPost } from './contextUtils'
+import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
 import { useLocation } from 'preact-iso'
 import { deleteCookie } from '../util/cookies'
 import { toast } from 'react-toastify'
@@ -25,10 +25,12 @@ export type ILoginContext = {
 	error: string | null,
 	loginRedirectMessage: string | null,
 	loginRedirectTo: string | null,
+	isDeletingAccount: boolean,
 	// eslint-disable-next-line no-unused-vars
 	loginUser: (email: string, password: string) => Promise<void>,
 	logoutUser: () => void,
 	fetchMe: () => Promise<void>,
+	deleteAccount: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>,
 }
@@ -42,6 +44,7 @@ export const LoginContextProvider = ({
 	const [ error, setError ] = useState<string | null>(null)
 	const [ loginRedirectMessage, setLoginRedirectMessage ] = useState<string | null>(null)
 	const [ loginRedirectTo, setLoginRedirectTo ] = useState<string | null>(null)
+	const [ isDeletingAccount, setIsDeletingAccount ] = useState<boolean>(false)
 
 	const { route, path } = useLocation()
 
@@ -79,15 +82,16 @@ export const LoginContextProvider = ({
 		})
 	}
 
-	const logoutUser = async () => {
+	const logoutUser = async (shouldRoute: boolean = true) => {
 		setError(null)
 		setUser(null)
 
 		await simpleDataPost('/api/user/logout', {}, () => {
 			localStorage.setItem('isLoggedIn', 'false')
-			setLoginRedirectMessage('Logged out.')
-
-			route('/dash/login')
+			if (shouldRoute) {
+				setLoginRedirectMessage('Logged out.')
+				route('/dash/login')
+			}
 		}).catch(e => {
 			toast.error('Logout failed?')
 			console.error(e)
@@ -108,6 +112,19 @@ export const LoginContextProvider = ({
 		})
 	}
 
+	const deleteAccount = async () => {
+		setIsDeletingAccount(true)
+		await simpleDelete('/api/user/me', async () => {
+			setError(null)
+			setUser(null)
+			await logoutUser(false)
+			setLoginRedirectMessage('Account deleted.')
+			route('/dash/login')
+		}).catch(() => {
+			toast.error('Failed to delete user.')
+		})
+	}
+
 	return (
 		<LoginContext.Provider
 			value={{
@@ -115,9 +132,11 @@ export const LoginContextProvider = ({
 				error,
 				loginRedirectMessage,
 				loginRedirectTo,
+				isDeletingAccount,
 				loginUser,
 				logoutUser,
 				fetchMe,
+				deleteAccount,
 				changePassword,
 			}}
 		>

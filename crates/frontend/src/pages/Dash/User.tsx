@@ -2,9 +2,11 @@ import { useContext, useState } from 'preact/hooks'
 import { RequireLogin } from '../../components/HoC/RequireLogin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
 import { LoginContext } from '../../context/LoginContext'
+import { Modal } from '../../components/Modal'
 
 const InternalUserPage = () => {
-	const { changePassword, error } = useContext(LoginContext)
+	const { changePassword, deleteAccount, isDeletingAccount } = useContext(LoginContext)
+	const [ isDeletionModalOpen, setDeletionModalOpen ] = useState(false)
 
 	const [ formData, setFormData ] = useState({
 		currentPassword: '',
@@ -27,6 +29,29 @@ const InternalUserPage = () => {
 
 	return (
 		<Dashboard>
+			<Modal
+				title="Confirm Account Deletion"
+				open={isDeletionModalOpen}
+				onClose={() => setDeletionModalOpen(false)}
+				actionButton={!isDeletingAccount && (
+					<div class="flex justify-end">
+						<button class="bg-gray-300 text-gray-700 hover:bg-gray-400 font-semibold py-2 px-4 rounded-md mr-2" onClick={() => setDeletionModalOpen(false)}>Cancel</button>
+						<button class="bg-red-500 text-white hover:bg-red-600 font-semibold py-2 px-4 rounded-md" onClick={() => deleteAccount()}>Delete Account</button>
+					</div>
+				)}
+			>
+				{
+					!isDeletingAccount
+						? <p class="mb-6">Are you sure you want to delete your account? This action cannot be undone.</p>
+						: (
+							<div class="flex items-center justify-center flex-col">
+								<div class="loader border-4 border-b-transparent border-blue-500 animate-spin border-solid w-16 h-16 rounded-full" />
+								<span class="text-gray-700">Deleting...</span>
+							</div>
+						)
+				}
+			</Modal>
+			
 			<div class="bg-gray-100 min-h-screen">
 				<div class="w-full max-w-full px-8 py-12">
 					<div class="grid grid-cols-2 gap-8">
@@ -147,6 +172,7 @@ const InternalUserPage = () => {
 							<button
 								type="submit"
 								class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+								onClick={() => setDeletionModalOpen(true)}
 							>
         						Delete my account
 							</button>
