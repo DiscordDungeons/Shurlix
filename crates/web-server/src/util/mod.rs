@@ -25,7 +25,14 @@ pub fn is_url(url: &str) -> bool {
 /// Strips protocol from a url
 pub fn strip_protocol(url_str: &str) -> Result<String, url::ParseError> {
     let url = Url::parse(url_str)?;
-    Ok(url.host_str().unwrap_or("") .to_string())
+
+    // Get the host and port
+    let host_with_port = match url.port() {
+        Some(port) => format!("{}:{}", url.host_str().unwrap(), port),
+        None => url.host_str().unwrap().to_string(),
+    };
+
+    Ok(host_with_port)
 }
 
 /// Checks if the input starts with any of the given patterns
@@ -33,3 +40,17 @@ pub fn starts_with_any(input: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| input.starts_with(pattern))
 }
 
+#[cfg(test)]
+mod test {
+    use crate::util::strip_protocol;
+
+    #[test]
+    fn strip_localhost_test() {
+        assert_eq!(strip_protocol("http://localhost").unwrap(), "localhost")
+    }
+
+    #[test]
+    fn strip_localhost_port_test() {
+        assert_eq!(strip_protocol("http://localhost:3000").unwrap(), "localhost:3000")
+    }
+}
