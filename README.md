@@ -206,6 +206,10 @@ _For more examples, please refer to the [Documentation](https://example.com)_
             - [x] Update email & username
             - [x] Change password
             - [x] Delete account
+    - [ ] Initial setup flow
+      - [ ] Add admin account
+      - [ ] Setup first domain
+      - [ ] Check settings (maybe move them into db?)
 - [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links
