@@ -11,6 +11,7 @@ use asset::Asset;
 use common::GenericMessage;
 use db::{models::{Link, VerificationToken}, DbPool};
 use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
+use extensions::domain::ExtractedDomain;
 use mime_guess::from_path;
 use services::email::Email;
 use std::net::SocketAddr;
@@ -107,13 +108,15 @@ async fn main() {
 
 async fn handle_slug(
     Extension(pool): Extension<DbPool>,
+    ExtractedDomain(_domain, domain_id): ExtractedDomain,
     Path(slug): Path<String>,
 ) -> impl IntoResponse {
     let conn = &mut pool.get().map_err(|e| {
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
-    let existing_link = Link::get_by_slug(&slug, conn);
+
+    let existing_link = Link::get_by_domain_slug(domain_id, &slug, conn);
 
     if existing_link.is_err() {
         return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")));

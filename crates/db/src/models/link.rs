@@ -41,6 +41,16 @@ impl Link {
         links
     }
 
+    pub fn get_by_domain_slug(domain_id: i32, slug: &String, conn: &mut DbConnection) -> Result<Vec<Link>, diesel::result::Error>  {
+        links::table
+            .filter(
+                links::custom_slug.eq(slug)
+                    .or(links::slug.eq(slug))
+                    .and(links::domain_id.eq(domain_id)),
+            )
+            .load::<Link>(conn)
+    }
+
     pub fn get_by_owner_id(owner: i32, conn: &mut DbConnection) -> Result<Vec<Link>, diesel::result::Error> {
         links::table.filter(
             links::owner_id.eq(owner)
