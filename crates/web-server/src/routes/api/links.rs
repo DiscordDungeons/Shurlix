@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 struct CreateLink {
     custom_slug: Option<String>,
+    domain_id: i32,
     link: String,
 }
 
@@ -59,6 +60,7 @@ async fn create_link(
     let new_link = NewLink {
         custom_slug: payload.custom_slug,
         original_link: payload.link,
+        domain_id: payload.domain_id,
         owner_id,
         slug: slug
     };

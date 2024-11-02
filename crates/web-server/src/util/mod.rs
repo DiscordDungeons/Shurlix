@@ -22,7 +22,14 @@ pub fn is_url(url: &str) -> bool {
     }
 }
 
+/// Strips protocol from a url
+pub fn strip_protocol(url_str: &str) -> Result<String, url::ParseError> {
+    let url = Url::parse(url_str)?;
+    Ok(url.host_str().unwrap_or("") .to_string())
+}
+
 /// Checks if the input starts with any of the given patterns
 pub fn starts_with_any(input: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| input.starts_with(pattern))
 }
+

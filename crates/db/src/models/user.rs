@@ -12,6 +12,7 @@ pub struct User {
     pub email: String,
     pub password_hash: String,
     pub verified_at: Option<NaiveDateTime>,
+    pub is_admin: bool,
     pub created_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>
 }
@@ -30,6 +31,7 @@ pub struct SanitizedUser {
     pub username: String,
     pub email: String,  
     pub verified_at: Option<NaiveDateTime>,
+    pub is_admin: bool,
     pub created_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>
 }
@@ -42,7 +44,8 @@ impl From<&User> for SanitizedUser {
             email: user.email.clone(),  
             verified_at: user.verified_at,
             created_at: user.created_at,
-            deleted_at: user.deleted_at
+            deleted_at: user.deleted_at,
+            is_admin: user.is_admin,
         }
     }
 }

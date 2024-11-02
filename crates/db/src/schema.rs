@@ -35,6 +35,7 @@ diesel::table! {
         email -> Varchar,
         password_hash -> Text,
         verified_at -> Nullable<Timestamp>,
+        is_admin -> Bool,
         created_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
     }

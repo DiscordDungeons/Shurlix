@@ -8,6 +8,7 @@ use crate::{schema::links, DbConnection};
 #[diesel(table_name = crate::schema::links)]
 pub struct Link {
     pub id: i32,
+    pub domain_id: i32,
     pub slug: String,
     pub custom_slug: Option<String>,
     pub original_link: String,
@@ -71,6 +72,7 @@ impl Link {
 #[diesel(table_name = crate::schema::links)]
 pub struct NewLink {
     pub slug: String,
+    pub domain_id: i32,
     pub custom_slug: Option<String>,
     pub original_link: String,
     pub owner_id: Option<i32>,
