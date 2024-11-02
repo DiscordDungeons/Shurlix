@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, routing::{get, post}, Extension, Json, Router};
+use axum::{extract::Path, http::StatusCode, routing::{delete, get, post}, Extension, Json, Router};
 
 
 
@@ -49,9 +49,29 @@ async fn create_domain(
 	}
 }
 
+async fn delete_domain(
+	Extension(pool): Extension<DbPool>,
+    AuthedUser(user): AuthedUser,
+	Path(id): Path<i32>,
+) -> APIResponse<GenericMessage> {
+	let is_admin: Option<bool> = user.map(|u| u.is_admin);
+
+    if is_admin.is_none() || (is_admin.is_some() && is_admin.unwrap() == false) {
+        return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+    }
+
+	let conn = &mut pool.get().map_err(|e| {
+        (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
+    })?;
+
+	let _= Domain::delete_by_id(id, conn);
+	
+	Ok((StatusCode::OK, GenericMessage::new("Domain deleted.")))
+}
 
 // Starts at /api/domains
 pub fn domains_router() -> Router {
     Router::new()
         .route("/create", post(create_domain))
+		.route("/:id", delete(delete_domain))
 }
