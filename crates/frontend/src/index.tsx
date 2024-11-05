@@ -13,26 +13,28 @@ import { LoginPage } from './pages/Login/index'
 import { RegisterPage } from './pages/Register/index.js'
 import { UserPage } from './pages/Dash/User.js'
 import { DomainsPage } from './pages/Dash/Domains.js'
+import { ProviderComposer } from './components/ProviderComposer.js'
+
+const providers = [
+	LocationProvider,
+	ConfigContextProvider,
+	LoginContextProvider,
+	ApiContextProvider,
+]
 
 export function App() {
 	return (
-		<LocationProvider>
-			<ConfigContextProvider>
-				<LoginContextProvider>
-					<ApiContextProvider>
-						<Router>
-							<Route path="/" component={Home} />
-							<Route path="/dash/login" component={LoginPage} />
-							<Route path="/dash/me" component={UserPage} />
-							<Route path="/dash/register" component={RegisterPage} />
-							<Route path="/dash/links" component={LinkList} />
-							<Route path="/dash/domains" component={DomainsPage} />
-							<Route default component={NotFound} />
-						</Router>
-					</ApiContextProvider>
-				</LoginContextProvider>
-			</ConfigContextProvider>
-		</LocationProvider>
+		<ProviderComposer providers={providers}>
+			<Router>
+				<Route path="/" component={Home} />
+				<Route path="/dash/login" component={LoginPage} />
+				<Route path="/dash/me" component={UserPage} />
+				<Route path="/dash/register" component={RegisterPage} />
+				<Route path="/dash/links" component={LinkList} />
+				<Route path="/dash/domains" component={DomainsPage} />
+				<Route default component={NotFound} />
+			</Router>
+		</ProviderComposer>
 	)
 }
 
