@@ -89,6 +89,7 @@ async fn main() {
 
     // build our application with a route
     // TODO: only handle api, assets & dash on BASE_URL in config
+    // TODO: Can be done with https://github.com/tokio-rs/axum/discussions/934
     let app = Router::new()
         .route("/", get(index))
         .route("/dash/*path", get(index))
