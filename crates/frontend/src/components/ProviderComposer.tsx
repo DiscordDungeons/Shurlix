@@ -16,5 +16,5 @@ export const ProviderComposer = ({
 	(AccumulatedProviders, CurrentProvider) => (
 		<CurrentProvider>{AccumulatedProviders}</CurrentProvider>
 	),
-	children as VNode, // Assert the initial value as a VNode type
+	children as VNode,
 )

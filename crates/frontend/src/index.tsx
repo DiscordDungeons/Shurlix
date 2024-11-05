@@ -14,12 +14,14 @@ import { RegisterPage } from './pages/Register/index.js'
 import { UserPage } from './pages/Dash/User.js'
 import { DomainsPage } from './pages/Dash/Domains.js'
 import { ProviderComposer } from './components/ProviderComposer.js'
+import { DomainContextProvider } from './context/DomainContext.js'
 
 const providers = [
 	LocationProvider,
 	ConfigContextProvider,
 	LoginContextProvider,
 	ApiContextProvider,
+	DomainContextProvider,
 ]
 
 export function App() {
