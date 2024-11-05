@@ -88,6 +88,7 @@ async fn main() {
     }
 
     // build our application with a route
+    // TODO: only handle api, assets & dash on BASE_URL in config
     let app = Router::new()
         .route("/", get(index))
         .route("/dash/*path", get(index))

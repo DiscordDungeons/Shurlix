@@ -39,6 +39,7 @@ async fn create_link(
 
         // Validate custom slug
         // TODO: Improve this. Maybe make it reject if only matches exacly and with /*, instead of starts with.
+        // TODO: Also ONLY reject on domains that are NOT BASE_URL in config
         if starts_with_any(&custom_slug, &constants::RESERVED_SLUGS) {
             return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Custom slug contains prohibited value")));
         }
