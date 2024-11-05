@@ -15,7 +15,7 @@ use argon2::{
 };
 use zxcvbn::{feedback::{Suggestion, Warning}, zxcvbn, Entropy, Score};
 
-use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::{templates::VerificationEmail, Email}, util::{generate_unique_string, jwt::encode_user_token}};
+use crate::{common::{APIResponse, CookiedAPIResponse, GenericMessage}, config::Config, extensions::auth::AuthedUser, services::email::{templates::VerificationEmail, Email}, types::{PaginatedResponse, PaginationQuery}, util::{generate_unique_string, jwt::encode_user_token}};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -67,18 +67,6 @@ struct ChangePasswordRequest {
 	password: String,
 	new_password: String,
 	confirm_password: String,
-}
-
-#[derive(Deserialize)]
-struct Pagination {
-	per_page: i64,
-	page: i64,
-}
-
-#[derive(Serialize)]
-struct PaginatedLinks {
-	links: Vec<Link>,
-	total_count: i64,
 }
 
 #[derive(Deserialize)]
@@ -258,9 +246,9 @@ async fn user_profile(
 
 async fn my_links(
 	AuthedUser(user): AuthedUser,
-	Query(pagination): Query<Pagination>,
+	Query(pagination): Query<PaginationQuery>,
 	Extension(pool): Extension<DbPool>,
-) -> APIResponse<PaginatedLinks> {
+) -> APIResponse<PaginatedResponse<Link>> {
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
     if owner_id.is_none() {
@@ -271,11 +259,11 @@ async fn my_links(
         (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string()))
     })?;
 
-	let links = Link::get_by_owner_id_paginated(owner_id.unwrap(), pagination.page, pagination.per_page, conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
+	let items = Link::get_by_owner_id_paginated(owner_id.unwrap(), pagination.page, pagination.per_page, conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 	let total_count = Link::get_total_count(owner_id.unwrap(), conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 
-	Ok((StatusCode::OK, Json(PaginatedLinks {
-		links,
+	Ok((StatusCode::OK, Json(PaginatedResponse::<Link> {
+		items,
 		total_count,
 	})))
 }

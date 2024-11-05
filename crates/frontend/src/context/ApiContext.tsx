@@ -14,8 +14,8 @@ export type Link = {
     deleted_at?: string;
 };
 
-type PaginatedLinks = {
-	links: Link[]
+export type PaginatedResponse<T> = {
+	items: T[]
 	total_count: number,
 }
 
@@ -68,12 +68,12 @@ export const ApiContextProvider = ({
 
 
 	const getMyLinks = async () => {
-		simpleDataFetch<PaginatedLinks>(`/api/user/me/links?page=${currentLinkPage}&per_page=${perPage}`, data => {
+		simpleDataFetch<PaginatedResponse<Link>>(`/api/user/me/links?page=${currentLinkPage}&per_page=${perPage}`, data => {
 			setError(null)
 
 			setTotalLinkCount(data.total_count)
 
-			setLinks(data.links)
+			setLinks(data.items)
 		})
 	}
 

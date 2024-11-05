@@ -1,5 +1,6 @@
 pub mod jwt;
 
+use db::models::User;
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use url::Url;
@@ -40,9 +41,15 @@ pub fn starts_with_any(input: &str, patterns: &[String]) -> bool {
     patterns.iter().any(|pattern| input.starts_with(pattern))
 }
 
+pub fn is_admin(user: Option<User>) -> bool {
+    user.map_or(false, |u| u.is_admin)
+}
+
 #[cfg(test)]
 mod test {
     use crate::util::strip_protocol;
+    use super::*;
+    use chrono::NaiveDateTime;
 
     #[test]
     fn strip_localhost_test() {
@@ -52,5 +59,41 @@ mod test {
     #[test]
     fn strip_localhost_port_test() {
         assert_eq!(strip_protocol("http://localhost:3000").unwrap(), "localhost:3000")
+    }
+
+    #[test]
+    fn test_is_admin_when_user_is_admin() {
+        let user = Some(User {
+            id: 1,
+            username: "admin".to_string(),
+            email: "admin@example.com".to_string(),
+            password_hash: "hash".to_string(),
+            verified_at: None,
+            is_admin: true,
+            created_at: NaiveDateTime::from_timestamp(0, 0),
+            deleted_at: None,
+        });
+        assert!(is_admin(user));
+    }
+
+    #[test]
+    fn test_is_admin_when_user_is_not_admin() {
+        let user = Some(User {
+            id: 2,
+            username: "user".to_string(),
+            email: "user@example.com".to_string(),
+            password_hash: "hash".to_string(),
+            verified_at: None,
+            is_admin: false,
+            created_at: NaiveDateTime::from_timestamp(0, 0),
+            deleted_at: None,
+        });
+        assert!(!is_admin(user));
+    }
+
+    #[test]
+    fn test_is_admin_when_user_is_none() {
+        let user: Option<User> = None;
+        assert!(!is_admin(user));
     }
 }

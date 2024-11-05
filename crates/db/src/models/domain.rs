@@ -26,6 +26,19 @@ impl Domain {
 	pub fn delete_by_id(id: i32, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
         diesel::delete(domains::table.filter(domains::id.eq(id))).execute(conn)
     }
+
+	pub fn get_paginated(page: i64, per_page: i64, conn: &mut DbConnection) -> Result<Vec<Domain>, diesel::result::Error> {
+        let offset_value = (page - 1) * per_page;
+        domains::table
+            .order_by(domains::created_at.desc())
+            .limit(per_page)
+            .offset(offset_value)
+            .load::<Domain>(conn)
+    }
+
+	pub fn get_total_count(conn: &mut DbConnection) -> QueryResult<i64> {
+        domains::table.count().get_result(conn)
+    }
 }
 
 #[derive(Debug, Insertable)]
