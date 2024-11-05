@@ -3,7 +3,7 @@ import { StateUpdater, useEffect, useState } from 'preact/hooks'
 import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
 import { toast } from 'react-toastify'
 
-type Link = {
+export type Link = {
     id: number;
     slug: string;
     custom_slug?: string;

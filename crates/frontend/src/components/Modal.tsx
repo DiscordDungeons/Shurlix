@@ -30,7 +30,7 @@ export const Modal = ({
 		<div>
 			{open && (
 				<div
-					class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75"
+					class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50"
 					onClick={handleClickOutside}
 				>
 					<div

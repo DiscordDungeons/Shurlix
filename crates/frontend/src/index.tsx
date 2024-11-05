@@ -12,6 +12,7 @@ import { ApiContextProvider } from './context/ApiContext'
 import { LoginPage } from './pages/Login/index'
 import { RegisterPage } from './pages/Register/index.js'
 import { UserPage } from './pages/Dash/User.js'
+import { DomainsPage } from './pages/Dash/Domains.js'
 
 export function App() {
 	return (
@@ -25,6 +26,7 @@ export function App() {
 							<Route path="/dash/me" component={UserPage} />
 							<Route path="/dash/register" component={RegisterPage} />
 							<Route path="/dash/links" component={LinkList} />
+							<Route path="/dash/domains" component={DomainsPage} />
 							<Route default component={NotFound} />
 						</Router>
 					</ApiContextProvider>

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 type User = {
     id: number,
     username: string,
+	is_admin: boolean,
     email: string,
     verified_at: Date | null,
     created_at: Date,
