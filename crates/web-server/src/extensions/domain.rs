@@ -27,11 +27,11 @@ where
 				return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Invalid host header.")))
 			})?
 			.to_str()
-			.map_err(|err| {
+			.map_err(|_| {
 				return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to parse host header.")))
 			})?;
 
-		let conn = &mut pool.get().map_err(|e| {
+		let conn = &mut pool.get().map_err(|_| {
 			return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to get connection.")))
 		})?;
 

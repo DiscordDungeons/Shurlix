@@ -7,12 +7,14 @@ mod constants;
 mod extensions;
 mod services;
 mod types;
+mod hostname_router;
 
 use asset::Asset;
 use common::GenericMessage;
 use db::{models::{Link, VerificationToken}, DbPool};
-use axum::{body::Body, extract::Path, http::StatusCode,response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
+use axum::{body::Body, extract::{Path, Request}, http::StatusCode, middleware::{self, Next}, response::{IntoResponse, Redirect, Response}, routing::get, Extension, Router};
 use extensions::domain::ExtractedDomain;
+use hostname_router::HostnameRouter;
 use mime_guess::from_path;
 use services::email::Email;
 use std::net::SocketAddr;
@@ -65,6 +67,20 @@ async fn create_scheduler(pool: &DbPool) -> Result<(), JobSchedulerError> {
     Ok(())
 }
 
+// Middleware for logging
+async fn log_request(req: Request<Body>, next: Next) -> Result<Response, StatusCode> {
+    let path = req.uri().path().to_string();
+    let method = req.method().to_string();
+    
+    log::debug!("Request received: Method: {} Path: {}", method, path);
+
+    let response = next.run(req).await;
+
+    log::debug!("Response status: {}", response.status());
+
+    Ok(response)
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::init();
@@ -87,18 +103,27 @@ async fn main() {
         Err(e) => eprintln!("Failed to create scheduler: {:#?}", e)
     }
 
-    // build our application with a route
-    // TODO: only handle api, assets & dash on BASE_URL in config
-    // TODO: Can be done with https://github.com/tokio-rs/axum/discussions/934
-    let app = Router::new()
+    let app_router = Router::new()
         .route("/", get(index))
+        .route("/:slug", get(handle_slug))
         .route("/dash/*path", get(index))
         .route("/assets/*path", get(asset_handler))
-        .route("/:slug", get(handle_slug))
         .nest("/api", routes::api::api_router())
-        .layer(Extension(config))
+        .layer(Extension(config.clone()))
         .layer(Extension(email.unwrap()))
-        .layer(Extension(pool.clone()));
+        .layer(Extension(pool.clone()))
+        .layer(middleware::from_fn(log_request));
+    
+    let slug_router = Router::new()
+        .route("/:slug", get(handle_slug))
+        .layer(Extension(pool.clone()))
+        .layer(middleware::from_fn(log_request));
+
+    let hostname_router = HostnameRouter::new(app_router, slug_router, config.clone());
+
+    let app = Router::new()
+        .fallback(hostname_router);
+       
 
     // run it
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
