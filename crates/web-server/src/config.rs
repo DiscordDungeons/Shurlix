@@ -58,13 +58,7 @@ impl Config {
 		));
 
 		if value == "" {
-			panic!(
-				"{} {} {} {}",
-				"[CONFIG ERROR]".bright_red(),
-				"✗ ".red().bold(),
-				name.yellow(),
-				"not set in .env"
-			);
+			panic!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env");
 		}
 
 		match value.parse::<T>() {
@@ -127,11 +121,7 @@ impl Config {
 
 			if !missing_vars.is_empty() {
 				for name in &missing_vars {
-					eprintln!(
-						"{} {} is required if SMTP is enabled",
-						"[CONFIG ERROR]".bright_red(),
-						name.yellow()
-					);
+					eprintln!("{} {} is required if SMTP is enabled", "[CONFIG ERROR]".bright_red(), name.yellow());
 				}
 				panic!(
 					"{} {} missing required environment variables for SMTP configuration",
@@ -162,8 +152,7 @@ impl Config {
 		let allow_anonymous_shorten = Config::get_var_required::<bool>("ALLOW_ANOYMOUS_SHORTEN");
 		let allow_registering = Config::get_var_required::<bool>("ALLOW_REGISTERING");
 		let enable_email_verification = Config::get_var_required::<bool>("ALLOW_REGISTERING");
-		let email_verification_ttl =
-			Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
+		let email_verification_ttl = Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
 
 		// TODO: Require smtp to be enabled if enable_email_verification is true
 

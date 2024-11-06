@@ -6,7 +6,7 @@ export type IConfigContext = {
 	allowCreateAnonymousLinks: boolean,
 	allowRegistering: boolean,
 	minPasswordStrength: number,
-	baseUrl: String,
+	baseUrl: string,
 }
 
 export const ConfigContext = createContext<IConfigContext>({
@@ -20,7 +20,7 @@ type ConfigResponse = {
 	allow_anonymous_shorten: boolean,
 	allow_registering: boolean,
 	min_password_strength: number,
-	base_url: String,
+	base_url: string,
 }
 
 export const ConfigContextProvider = ({

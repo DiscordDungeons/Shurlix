@@ -32,12 +32,11 @@ impl Email {
 
 		// TODO: Config for whether or not to use starttls?
 
-		let mailer =
-			AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(config.host.unwrap().as_str())?
-				.authentication(vec![Mechanism::Login])
-				.credentials(smtp_credentials)
-				.port(config.port.unwrap())
-				.build();
+		let mailer = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(config.host.unwrap().as_str())?
+			.authentication(vec![Mechanism::Login])
+			.credentials(smtp_credentials)
+			.port(config.port.unwrap())
+			.build();
 
 		Ok(Self {
 			mailer,
@@ -68,9 +67,7 @@ impl Email {
 			.parse::<Mailbox>()
 			.map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
-		let to_address = to
-			.parse::<Mailbox>()
-			.map_err(|e| Box::new(e) as Box<dyn Error>)?; // Co
+		let to_address = to.parse::<Mailbox>().map_err(|e| Box::new(e) as Box<dyn Error>)?; // Co
 
 		let email = Message::builder()
 			.from(from_address)

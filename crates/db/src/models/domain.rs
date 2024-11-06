@@ -18,13 +18,8 @@ impl Domain {
 		domains::table.find(id).first(conn)
 	}
 
-	pub fn get_by_domain(
-		domain: String,
-		conn: &mut DbConnection,
-	) -> Result<Domain, diesel::result::Error> {
-		domains::table
-			.filter(domains::domain.eq(domain))
-			.first(conn)
+	pub fn get_by_domain(domain: String, conn: &mut DbConnection) -> Result<Domain, diesel::result::Error> {
+		domains::table.filter(domains::domain.eq(domain)).first(conn)
 	}
 
 	pub fn delete_by_id(id: i32, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {

@@ -62,27 +62,19 @@ impl Handler<Request<Body>, ()> for HostnameRouter {
 			log::debug!("Base url is {}", base_url);
 
 			if host.unwrap() == base_url {
-				self.host1_router
-					.clone()
-					.oneshot(req)
-					.await
-					.unwrap_or_else(|_| {
-						Response::builder()
-							.status(StatusCode::INTERNAL_SERVER_ERROR)
-							.body(Body::empty())
-							.unwrap()
-					})
+				self.host1_router.clone().oneshot(req).await.unwrap_or_else(|_| {
+					Response::builder()
+						.status(StatusCode::INTERNAL_SERVER_ERROR)
+						.body(Body::empty())
+						.unwrap()
+				})
 			} else {
-				self.host2_router
-					.clone()
-					.oneshot(req)
-					.await
-					.unwrap_or_else(|_| {
-						Response::builder()
-							.status(StatusCode::INTERNAL_SERVER_ERROR)
-							.body(Body::empty())
-							.unwrap()
-					})
+				self.host2_router.clone().oneshot(req).await.unwrap_or_else(|_| {
+					Response::builder()
+						.status(StatusCode::INTERNAL_SERVER_ERROR)
+						.body(Body::empty())
+						.unwrap()
+				})
 			}
 		};
 

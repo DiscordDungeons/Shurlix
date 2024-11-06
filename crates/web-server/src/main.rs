@@ -37,9 +37,7 @@ async fn asset_handler(uri: axum::http::Uri) -> Response {
 	match Asset::get(&path) {
 		Some(file) => {
 			// Determine MIME type
-			let mime_type = from_path(&path)
-				.first()
-				.unwrap_or(mime::APPLICATION_OCTET_STREAM);
+			let mime_type = from_path(&path).first().unwrap_or(mime::APPLICATION_OCTET_STREAM);
 
 			// Create a response with the correct content type and body
 			Response::builder()
@@ -66,13 +64,10 @@ async fn create_scheduler(pool: &DbPool) -> Result<(), JobSchedulerError> {
 	let pool_clone = pool.clone();
 
 	scheduler
-		.add(Job::new(
-			"* 0 0 * * *",
-			move |_, _| match VerificationToken::delete_expired_pooled(&pool_clone) {
-				Ok(_) => log::debug!("Deleted expired verification tokens."),
-				Err(e) => log::error!("Failed to delete expired verification tokens: {:#?}", e),
-			},
-		)?)
+		.add(Job::new("* 0 0 * * *", move |_, _| match VerificationToken::delete_expired_pooled(&pool_clone) {
+			Ok(_) => log::debug!("Deleted expired verification tokens."),
+			Err(e) => log::error!("Failed to delete expired verification tokens: {:#?}", e),
+		})?)
 		.await?;
 
 	scheduler.start().await?;
@@ -140,9 +135,7 @@ async fn main() {
 	let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
 	log::info!("listening on {}", addr);
 	let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-	axum::serve(listener, app.into_make_service())
-		.await
-		.unwrap()
+	axum::serve(listener, app.into_make_service()).await.unwrap()
 }
 
 async fn handle_slug(
@@ -150,29 +143,20 @@ async fn handle_slug(
 	ExtractedDomain(_domain, domain_id): ExtractedDomain,
 	Path(slug): Path<String>,
 ) -> impl IntoResponse {
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	let existing_link = Link::get_by_domain_slug(domain_id, &slug, conn);
 
 	if existing_link.is_err() {
-		return Err((
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal Server Error"),
-		));
+		return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")));
 	}
 
 	let existing_link = existing_link.unwrap();
 
 	if existing_link.len() == 0 {
-		return Err((
-			StatusCode::NOT_FOUND,
-			GenericMessage::new("Slug not found."),
-		));
+		return Err((StatusCode::NOT_FOUND, GenericMessage::new("Slug not found.")));
 	}
 
 	let link = existing_link.first().unwrap();

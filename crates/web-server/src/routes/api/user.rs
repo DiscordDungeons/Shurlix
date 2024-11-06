@@ -6,9 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use db::{
-	models::{
-		Link, NewUser, NewVerificationToken, SanitizedUser, UpdateUser, User, VerificationToken,
-	},
+	models::{Link, NewUser, NewVerificationToken, SanitizedUser, UpdateUser, User, VerificationToken},
 	DbPool,
 };
 use email_address::EmailAddress;
@@ -125,40 +123,25 @@ async fn register_user(
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
 	if !EmailAddress::is_valid(&payload.email) {
-		return Err((
-			StatusCode::BAD_REQUEST,
-			GenericMessage::new("Invalid email"),
-		));
+		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
 	}
 
 	let password_estimate = zxcvbn(&payload.password, &[]);
 
 	if password_estimate.score().lt(&config.min_password_strength) {
-		return Err((
-			StatusCode::CONFLICT,
-			GenericMessage::new("Password is not strong enough."),
-		));
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
 	}
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	if User::email_exists(&payload.email, conn) {
-		return Err((
-			StatusCode::CONFLICT,
-			GenericMessage::new("Email already in use"),
-		));
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
 	}
 
 	if User::username_exists(&payload.username, conn) {
-		return Err((
-			StatusCode::CONFLICT,
-			GenericMessage::new("Username already in use"),
-		));
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Username already in use")));
 	}
 
 	let salt = SaltString::generate(&mut OsRng);
@@ -168,12 +151,7 @@ async fn register_user(
 	// Hash password to PHC string ($argon2id$v=19$...)
 	let password_hash = match argon2.hash_password(&payload.password.into_bytes(), &salt) {
 		Ok(hash) => hash.to_string(),
-		Err(_) => {
-			return Err((
-				StatusCode::INTERNAL_SERVER_ERROR,
-				GenericMessage::new("Internal Server Error"),
-			))
-		}
+		Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error"))),
 	};
 
 	let new_user = NewUser {
@@ -208,9 +186,7 @@ async fn register_user(
 							verification_token: verification_token.as_str(),
 							ttl: format!(
 								"{}",
-								humantime::format_duration(
-									config.email_verification_ttl.to_std().unwrap()
-								)
+								humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
 							)
 							.as_str(),
 						},
@@ -235,39 +211,24 @@ async fn login_user(
 	Extension(pool): Extension<DbPool>,
 	Json(payload): Json<LoginRequest>,
 ) -> CookiedAPIResponse<LoginResponse> {
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	let users = match User::get_by_email(&payload.email, conn) {
 		Ok(users) => users,
-		Err(_) => {
-			return Err((
-				StatusCode::INTERNAL_SERVER_ERROR,
-				GenericMessage::new("Internal server error."),
-			))
-		}
+		Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error."))),
 	};
 
 	if users.len() == 0 {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("Invalid credentials."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials.")));
 	}
 
 	let user = users.first().unwrap();
 
 	let argon2 = Argon2::default();
-	let parsed_hash = PasswordHash::new(&user.password_hash).map_err(|_| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal Server Error"),
-		)
-	})?;
+	let parsed_hash = PasswordHash::new(&user.password_hash)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
 
 	// Verify the password
 	match argon2.verify_password(&payload.password.as_bytes(), &parsed_hash) {
@@ -292,19 +253,13 @@ async fn login_user(
 				}),
 			))
 		}
-		Err(_) => Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("Invalid credentials."),
-		)),
+		Err(_) => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials."))),
 	}
 }
 
 async fn user_profile(AuthedUser(user): AuthedUser) -> APIResponse<SanitizedUser> {
 	match user {
-		None => Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("Invalid credentials."),
-		)),
+		None => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials."))),
 		Some(user) => Ok((StatusCode::OK, Json(SanitizedUser::from(&user)))),
 	}
 }
@@ -317,42 +272,19 @@ async fn my_links(
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
 	if owner_id.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
-	let items = Link::get_by_owner_id_paginated(
-		owner_id.unwrap(),
-		pagination.page,
-		pagination.per_page,
-		conn,
-	)
-	.map_err(|_| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal server error."),
-		)
-	})?;
-	let total_count = Link::get_total_count(owner_id.unwrap(), conn).map_err(|_| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal server error."),
-		)
-	})?;
+	let items = Link::get_by_owner_id_paginated(owner_id.unwrap(), pagination.page, pagination.per_page, conn)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
+	let total_count = Link::get_total_count(owner_id.unwrap(), conn)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 
-	Ok((
-		StatusCode::OK,
-		Json(PaginatedResponse::<Link> { items, total_count }),
-	))
+	Ok((StatusCode::OK, Json(PaginatedResponse::<Link> { items, total_count })))
 }
 
 async fn logout_user(jar: CookieJar) -> CookiedAPIResponse<GenericMessage> {
@@ -370,9 +302,7 @@ async fn logout_user(jar: CookieJar) -> CookiedAPIResponse<GenericMessage> {
 	Ok((jar2, GenericMessage::new("Logged out")))
 }
 
-async fn check_password(
-	Json(payload): Json<CheckPasswordRequest>,
-) -> APIResponse<CheckPasswordResponse> {
+async fn check_password(Json(payload): Json<CheckPasswordRequest>) -> APIResponse<CheckPasswordResponse> {
 	let estimate = zxcvbn(&payload.password, &[]);
 
 	Ok((StatusCode::OK, Json(CheckPasswordResponse::from(estimate))))
@@ -387,48 +317,32 @@ async fn update_password(
 	let owner_id: Option<i32> = user.clone().map(|u| u.id);
 
 	if owner_id.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
 	let user = user.unwrap();
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	// Confirm password
 
 	let argon2 = Argon2::default();
-	let parsed_hash = PasswordHash::new(&user.password_hash).map_err(|_| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal Server Error"),
-		)
-	})?;
+	let parsed_hash = PasswordHash::new(&user.password_hash)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
 
 	// Verify the password
 	match argon2.verify_password(&payload.password.as_bytes(), &parsed_hash) {
 		Ok(_) => {
 			if payload.new_password != payload.confirm_password {
-				return Err((
-					StatusCode::CONFLICT,
-					GenericMessage::new("Passwords do not match."),
-				));
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Passwords do not match.")));
 			}
 
 			let password_estimate = zxcvbn(&payload.new_password, &[]);
 
 			if password_estimate.score().lt(&config.min_password_strength) {
-				return Err((
-					StatusCode::CONFLICT,
-					GenericMessage::new("Password is not strong enough."),
-				));
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
 			}
 
 			let salt = SaltString::generate(&mut OsRng);
@@ -438,107 +352,64 @@ async fn update_password(
 			// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
 
 			// Hash password to PHC string ($argon2id$v=19$...)
-			let password_hash =
-				match argon2.hash_password(&payload.new_password.into_bytes(), &salt) {
-					Ok(hash) => hash.to_string(),
-					Err(_) => {
-						return Err((
-							StatusCode::INTERNAL_SERVER_ERROR,
-							GenericMessage::new("Internal Server Error"),
-						))
-					}
-				};
+			let password_hash = match argon2.hash_password(&payload.new_password.into_bytes(), &salt) {
+				Ok(hash) => hash.to_string(),
+				Err(_) => {
+					return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
+				}
+			};
 
 			match user.update_password_hash(password_hash, conn) {
 				Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Password updated."))),
 				Err(_) => {
-					return Err((
-						StatusCode::INTERNAL_SERVER_ERROR,
-						GenericMessage::new("Internal Server Error"),
-					))
+					return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))
 				}
 			}
 		}
-		Err(_) => Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("Invalid credentials."),
-		)),
+		Err(_) => Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials."))),
 	}
 }
 
-async fn validate_email(
-	Extension(pool): Extension<DbPool>,
-	Path(token): Path<String>,
-) -> APIResponse<GenericMessage> {
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+async fn validate_email(Extension(pool): Extension<DbPool>, Path(token): Path<String>) -> APIResponse<GenericMessage> {
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
-	let records = VerificationToken::get_by_token(token, conn).map_err(|_| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Failed to get token."),
-		)
-	})?;
+	let records = VerificationToken::get_by_token(token, conn)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to get token.")))?;
 
 	if records.len() == 0 {
-		return Err((
-			StatusCode::NOT_FOUND,
-			GenericMessage::new("Token expired or invalid."),
-		));
+		return Err((StatusCode::NOT_FOUND, GenericMessage::new("Token expired or invalid.")));
 	}
 
 	let (token, user) = records.get(0).unwrap();
 
 	if token.is_expired() {
-		return Err((
-			StatusCode::NOT_FOUND,
-			GenericMessage::new("Token expired or invalid."),
-		));
+		return Err((StatusCode::NOT_FOUND, GenericMessage::new("Token expired or invalid.")));
 	}
 
 	let _ = token.delete(conn);
 
 	user.set_verified_at(Some(Utc::now().naive_utc()), conn)
-		.map_err(|_| {
-			(
-				StatusCode::INTERNAL_SERVER_ERROR,
-				GenericMessage::new("Failed to set verified at."),
-			)
-		})?;
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to set verified at.")))?;
 
 	Ok((StatusCode::OK, GenericMessage::new("Email verified.")))
 }
 
-async fn delete_me(
-	AuthedUser(user): AuthedUser,
-	Extension(pool): Extension<DbPool>,
-) -> APIResponse<GenericMessage> {
+async fn delete_me(AuthedUser(user): AuthedUser, Extension(pool): Extension<DbPool>) -> APIResponse<GenericMessage> {
 	if user.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
 	let user = user.unwrap();
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	match user.delete(conn) {
 		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Deleted."))),
-		Err(_) => Err((
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Failed to delete user."),
-		)),
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to delete user."))),
 	}
 }
 
@@ -551,20 +422,14 @@ async fn update_user(
 	Json(payload): Json<UserUpdateRequest>,
 ) -> APIResponse<GenericMessage> {
 	if user.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
 	let user = user.unwrap();
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	let mut update_user = UpdateUser {
 		email: None,
@@ -575,17 +440,11 @@ async fn update_user(
 	match payload.email {
 		Some(email) => {
 			if User::email_exists(&email, conn) {
-				return Err((
-					StatusCode::CONFLICT,
-					GenericMessage::new("Email already in use"),
-				));
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
 			}
 
 			if !EmailAddress::is_valid(&email) {
-				return Err((
-					StatusCode::BAD_REQUEST,
-					GenericMessage::new("Invalid email"),
-				));
+				return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
 			}
 
 			update_user.email = Some(email.clone());
@@ -596,10 +455,7 @@ async fn update_user(
 	match payload.username {
 		Some(username) => {
 			if User::username_exists(&username, conn) {
-				return Err((
-					StatusCode::CONFLICT,
-					GenericMessage::new("Username already in use"),
-				));
+				return Err((StatusCode::CONFLICT, GenericMessage::new("Username already in use")));
 			}
 
 			update_user.username = Some(username.clone());
@@ -637,9 +493,7 @@ async fn update_user(
 								verification_token: verification_token.as_str(),
 								ttl: format!(
 									"{}",
-									humantime::format_duration(
-										config.email_verification_ttl.to_std().unwrap()
-									)
+									humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
 								)
 								.as_str(),
 							},
@@ -650,10 +504,7 @@ async fn update_user(
 
 			Ok((StatusCode::OK, GenericMessage::new("Updated.")))
 		}
-		Err(_) => Err((
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Failed to update user."),
-		)),
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Failed to update user."))),
 	}
 }
 

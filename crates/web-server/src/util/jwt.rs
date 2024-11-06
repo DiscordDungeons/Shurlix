@@ -17,28 +17,20 @@ pub fn encode_user_token(id: i32, jwt_secret: &[u8]) -> String {
 		iat: now.unix_timestamp() as usize,
 		exp: (now + Duration::hours(1)).unix_timestamp() as usize, // 1 hour
 	};
-	let token = encode(
-		&Header::default(),
-		&claims,
-		&EncodingKey::from_secret(jwt_secret),
-	)
-	.unwrap();
+	let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(jwt_secret)).unwrap();
 
 	token
 }
 
 pub fn decode_user_token(token: &String, jwt_secret: &[u8]) -> Option<i32> {
-	let decoded_token = match decode::<JwtClaims>(
-		&token,
-		&DecodingKey::from_secret(jwt_secret.as_ref()),
-		&Validation::default(),
-	) {
-		Ok(token) => token,
-		Err(e) => {
-			log::debug!("Failed to decode JWT: {}", e);
-			return None;
-		}
-	};
+	let decoded_token =
+		match decode::<JwtClaims>(&token, &DecodingKey::from_secret(jwt_secret.as_ref()), &Validation::default()) {
+			Ok(token) => token,
+			Err(e) => {
+				log::debug!("Failed to decode JWT: {}", e);
+				return None;
+			}
+		};
 
 	let user_id = match decoded_token.claims.sub.parse::<i32>() {
 		Ok(n) => n,

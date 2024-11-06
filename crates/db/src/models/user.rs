@@ -74,28 +74,15 @@ impl User {
 	}
 
 	/// Gets a user by username
-	pub fn get_by_username(
-		username: &str,
-		conn: &mut DbConnection,
-	) -> Result<Vec<User>, diesel::result::Error> {
-		users::table
-			.filter(users::username.eq(username))
-			.load::<User>(conn)
+	pub fn get_by_username(username: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+		users::table.filter(users::username.eq(username)).load::<User>(conn)
 	}
 
-	pub fn get_by_email(
-		email: &str,
-		conn: &mut DbConnection,
-	) -> Result<Vec<User>, diesel::result::Error> {
-		users::table
-			.filter(users::email.eq(email))
-			.load::<User>(conn)
+	pub fn get_by_email(email: &str, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
+		users::table.filter(users::email.eq(email)).load::<User>(conn)
 	}
 
-	pub fn get_by_id(
-		id: &i32,
-		conn: &mut DbConnection,
-	) -> Result<Vec<User>, diesel::result::Error> {
+	pub fn get_by_id(id: &i32, conn: &mut DbConnection) -> Result<Vec<User>, diesel::result::Error> {
 		users::table.filter(users::id.eq(id)).load::<User>(conn)
 	}
 
@@ -123,14 +110,8 @@ impl User {
 		diesel::delete(users::table.filter(users::id.eq(self.id))).execute(conn)
 	}
 
-	pub fn update(
-		&self,
-		values: UpdateUser,
-		conn: &mut DbConnection,
-	) -> Result<usize, diesel::result::Error> {
-		diesel::update(users::table.find(self.id))
-			.set(&values)
-			.execute(conn)
+	pub fn update(&self, values: UpdateUser, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+		diesel::update(users::table.find(self.id)).set(&values).execute(conn)
 	}
 }
 

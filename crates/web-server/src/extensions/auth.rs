@@ -17,19 +17,12 @@ where
 {
 	type Rejection = ();
 
-	async fn from_request_parts(
-		parts: &mut axum::http::request::Parts,
-		state: &S,
-	) -> Result<Self, Self::Rejection> {
+	async fn from_request_parts(parts: &mut axum::http::request::Parts, state: &S) -> Result<Self, Self::Rejection> {
 		// Create a CookieJar from the cookies
 		let mut cookie_jar = CookieJar::new();
 
-		let Extension(config): Extension<Config> = Extension::from_request_parts(parts, state)
-			.await
-			.map_err(|_| ())?;
-		let Extension(pool): Extension<DbPool> = Extension::from_request_parts(parts, state)
-			.await
-			.map_err(|_| ())?;
+		let Extension(config): Extension<Config> = Extension::from_request_parts(parts, state).await.map_err(|_| ())?;
+		let Extension(pool): Extension<DbPool> = Extension::from_request_parts(parts, state).await.map_err(|_| ())?;
 
 		// Extract the Cookie header
 		if let Some(cookie_header) = parts.headers.get(axum::http::header::COOKIE) {
@@ -44,10 +37,7 @@ where
 
 				// Access a specific cookie if needed
 				if let Some(cookie) = cookie_jar.get("auth_token") {
-					let user_id = match decode_user_token(
-						&cookie.value().to_string(),
-						config.jwt_secret.as_bytes(),
-					) {
+					let user_id = match decode_user_token(&cookie.value().to_string(), config.jwt_secret.as_bytes()) {
 						Some(user_id) => user_id,
 						None => return Ok(AuthedUser(None)),
 					};

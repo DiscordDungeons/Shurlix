@@ -34,27 +34,18 @@ async fn create_link(
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
 	if !config.allow_anonymous_shorten && owner_id.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
 	// Validate before even getting the db
 
 	if !is_url(&payload.link) {
-		return Err((
-			StatusCode::BAD_REQUEST,
-			GenericMessage::new("Provided link is not a valid URL."),
-		));
+		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Provided link is not a valid URL.")));
 	}
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	if payload.custom_slug.clone().is_some() {
 		let custom_slug = payload.custom_slug.clone().unwrap();
@@ -63,28 +54,19 @@ async fn create_link(
 		// TODO: Improve this. Maybe make it reject if only matches exacly and with /*, instead of starts with.
 		// TODO: Also ONLY reject on domains that are NOT BASE_URL in config
 		if starts_with_any(&custom_slug, &constants::RESERVED_SLUGS) {
-			return Err((
-				StatusCode::BAD_REQUEST,
-				GenericMessage::new("Custom slug contains prohibited value"),
-			));
+			return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Custom slug contains prohibited value")));
 		}
 
 		let existing_link = Link::get_by_slug(&payload.custom_slug.clone().unwrap(), conn);
 
 		if existing_link.is_err() {
-			return Err((
-				StatusCode::INTERNAL_SERVER_ERROR,
-				GenericMessage::new("Internal Server Error"),
-			));
+			return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")));
 		}
 
 		let existing_link = existing_link.unwrap();
 
 		if existing_link.len() > 0 {
-			return Err((
-				StatusCode::CONFLICT,
-				GenericMessage::new("Slug already exists."),
-			));
+			return Err((StatusCode::CONFLICT, GenericMessage::new("Slug already exists.")));
 		}
 	}
 	let slug = util::generate_unique_string(config.shortened_link_length);
@@ -113,18 +95,12 @@ async fn delete_link(
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
 	if owner_id.is_none() {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
-	let conn = &mut pool.get().map_err(|e| {
-		(
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::from_string(e.to_string()),
-		)
-	})?;
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	let existing_link = Link::get_by_slug(&slug, conn);
 
@@ -141,18 +117,12 @@ async fn delete_link(
 	let existing_link = existing_link.first().unwrap();
 
 	if existing_link.owner_id != owner_id {
-		return Err((
-			StatusCode::UNAUTHORIZED,
-			GenericMessage::new("You are not allowed to perform this action."),
-		));
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
 	return match existing_link.delete(conn) {
 		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Slug deleted."))),
-		Err(_) => Err((
-			StatusCode::INTERNAL_SERVER_ERROR,
-			GenericMessage::new("Internal server error."),
-		)),
+		Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error."))),
 	};
 }
 

@@ -58,10 +58,7 @@ mod test {
 
 	#[test]
 	fn strip_localhost_port_test() {
-		assert_eq!(
-			strip_protocol("http://localhost:3000").unwrap(),
-			"localhost:3000"
-		)
+		assert_eq!(strip_protocol("http://localhost:3000").unwrap(), "localhost:3000")
 	}
 
 	#[test]

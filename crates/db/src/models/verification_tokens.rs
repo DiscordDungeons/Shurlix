@@ -25,15 +25,14 @@ impl VerificationToken {
 	}
 
 	pub fn delete_expired_pooled(pool: &DbPool) -> Result<usize, diesel::result::Error> {
-		let mut conn: diesel::r2d2::PooledConnection<
-			diesel::r2d2::ConnectionManager<PgConnection>,
-		> = match pool.clone().get() {
-			Ok(conn) => conn,
-			Err(e) => {
-				log::error!("Failed to get conn from pool: {:#?}", e);
-				return Ok(0);
-			}
-		};
+		let mut conn: diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>> =
+			match pool.clone().get() {
+				Ok(conn) => conn,
+				Err(e) => {
+					log::error!("Failed to get conn from pool: {:#?}", e);
+					return Ok(0);
+				}
+			};
 
 		diesel::sql_query("SELECT delete_expired_tokens();").execute(&mut conn)
 	}
@@ -55,8 +54,7 @@ impl VerificationToken {
 	}
 
 	pub fn delete(&self, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
-		diesel::delete(verification_tokens::table.filter(verification_tokens::id.eq(self.id)))
-			.execute(conn)
+		diesel::delete(verification_tokens::table.filter(verification_tokens::id.eq(self.id))).execute(conn)
 	}
 }
 
