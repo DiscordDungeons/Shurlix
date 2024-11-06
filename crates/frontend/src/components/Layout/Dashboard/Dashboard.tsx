@@ -36,11 +36,21 @@ export const Dashboard = ({
 								User settings
 							</a>
 						</li>
+						{user.is_admin && (
+							<>
+								<li>
+									<a href="/dash/domains" class="block px-4 py-2 hover:bg-gray-700">
+										Domains
+									</a>
+								</li>
+							</>
+						)}
 						<li>
 							<a href="#" class="block px-4 py-2 hover:bg-gray-700" onClick={logoutUser}>
 								Logout
 							</a>
 						</li>
+						
 					</ul>
 				</nav>
 			</aside>
