@@ -1,3 +1,3 @@
 pub fn main() {
-    println!("Frontend crate - nothing to run!");
+	println!("Frontend crate - nothing to run!");
 }

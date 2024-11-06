@@ -11,15 +11,17 @@ pub type DbConnection = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 pub fn create_pool(database_url: &str) -> DbPool {
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
-    r2d2::Pool::builder()
-        .build(manager)
-        .expect("Failed to create pool.")
+	let manager = ConnectionManager::<PgConnection>::new(database_url);
+	r2d2::Pool::builder()
+		.build(manager)
+		.expect("Failed to create pool.")
 }
 
-
 pub fn run_migrations(pool: &DbPool) {
-    let mut conn = pool.get().expect("Failed to get a DB connection from the pool");
+	let mut conn = pool
+		.get()
+		.expect("Failed to get a DB connection from the pool");
 
-    conn.run_pending_migrations(MIGRATIONS).expect("Failed to run migrations");
+	conn.run_pending_migrations(MIGRATIONS)
+		.expect("Failed to run migrations");
 }

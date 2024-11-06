@@ -7,15 +7,13 @@ use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 struct ConfigResponse {
-    allow_anonymous_shorten: bool,
+	allow_anonymous_shorten: bool,
 	allow_registering: bool,
 	min_password_strength: Score,
 	base_url: String,
 }
 
-async fn get_config(
-    Extension(config): Extension<Config>,
-) -> APIResponse<ConfigResponse> {
+async fn get_config(Extension(config): Extension<Config>) -> APIResponse<ConfigResponse> {
 	let response = ConfigResponse {
 		allow_anonymous_shorten: config.allow_anonymous_shorten,
 		allow_registering: config.allow_registering,
@@ -28,6 +26,5 @@ async fn get_config(
 
 // Starts at /api/config
 pub fn config_router() -> Router {
-	Router::new()
-		.route("/", get(get_config))
+	Router::new().route("/", get(get_config))
 }
