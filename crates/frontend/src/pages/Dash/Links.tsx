@@ -1,10 +1,11 @@
 import { useContext, useRef, useState } from 'preact/hooks'
 import { RequireLogin } from '../../components/HoC/RequireLogin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
-import { ApiContext, Link, LinkCreationState } from '../../context/ApiContext'
+import { ApiContext, Link } from '../../context/ApiContext'
 import { Modal } from '../../components/Modal'
 import { isValidUrl } from '../../util/validator'
 import { PaginatedTable } from '../../components/PaginatedTable'
+import { CreationState } from '../../context/types'
 
 const InternalLinkList = () => {
 	const {
@@ -111,13 +112,13 @@ const InternalLinkList = () => {
 					</button>
 				)}
 			>
-				{linkCreationState == LinkCreationState.CREATING && (
+				{linkCreationState == CreationState.CREATING && (
 					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md">
 						Creating Link...
 					</div>
 				)}
 
-				{linkCreationState == LinkCreationState.CREATED && (
+				{linkCreationState == CreationState.CREATED && (
 					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
 						Created Link!
 					</div>

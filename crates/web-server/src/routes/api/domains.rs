@@ -1,7 +1,7 @@
 use axum::{
 	extract::{Path, Query},
 	http::StatusCode,
-	routing::{delete, get, post},
+	routing::{delete, get, post, put},
 	Extension, Json, Router,
 };
 
@@ -103,10 +103,45 @@ async fn get_domains(
 	Ok((StatusCode::OK, Json(PaginatedResponse::<Domain> { items, total_count })))
 }
 
+async fn update_domain(
+    Extension(pool): Extension<DbPool>,
+	AuthedUser(user): AuthedUser,
+    Path(id): Path<i32>,
+	Json(payload): Json<CreateDomain>,
+) -> APIResponse<GenericMessage> {
+    if !is_admin(user) {
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
+	}
+
+	let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
+
+	if !is_url(&payload.domain) {
+		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Provided domain is not a valid URL.")));
+	}
+
+	let stripped_domain = strip_protocol(&payload.domain)
+		.map_err(|e| (StatusCode::BAD_REQUEST, GenericMessage::from_string(e.to_string())))?;
+
+	// Check if the new domain already exists
+	if let Ok(_) = Domain::get_by_domain(stripped_domain.clone(), conn) {
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Domain already exists.")));
+	}
+
+    let domain = Domain::get_by_id(id, conn).map_err(|_| (StatusCode::NOT_FOUND, GenericMessage::new("Domain not found")))?;
+
+    match domain.set_domain(stripped_domain, conn) {
+        Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Updated."))),
+        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error."))),
+    }
+}
+
 // Starts at /api/domains
 pub fn domains_router() -> Router {
 	Router::new()
 		.route("/", get(get_domains))
 		.route("/create", post(create_domain))
 		.route("/:id", delete(delete_domain))
+		.route("/:id", put(update_domain))
 }

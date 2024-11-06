@@ -2,6 +2,7 @@ import { createContext } from 'preact'
 import { StateUpdater, useEffect, useState } from 'preact/hooks'
 import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
 import { toast } from 'react-toastify'
+import { CreationState } from './types'
 
 export type Link = {
     id: number;
@@ -19,20 +20,10 @@ export type PaginatedResponse<T> = {
 	total_count: number,
 }
 
-export enum LinkCreationState {
-	// eslint-disable-next-line no-unused-vars
-	NONE = 'NONE',
-	// eslint-disable-next-line no-unused-vars
-	CREATING = 'CREATING',
-	// eslint-disable-next-line no-unused-vars
-	CREATED = 'CREATED',
-	// eslint-disable-next-line no-unused-vars
-	FAILED = 'FAILED',
-}
 
 export type IApiContext = {
 	links: Link[] | null,
-	linkCreationState: StateUpdater<LinkCreationState>,
+	linkCreationState: StateUpdater<CreationState>,
 	error: string | null,
 	currentLinkPage: number,
 	perPage: number,
@@ -62,9 +53,9 @@ export const ApiContextProvider = ({
 	const [ currentLinkPage, setCurrentLinkPage ] = useState<number>(1)
 	const [ perPage, setPerPage ] = useState(10)
 
-	const [ linkCreationState, setLinkCreationState ] = useState<LinkCreationState>(LinkCreationState.NONE)
+	const [ linkCreationState, setLinkCreationState ] = useState<CreationState>(CreationState.NONE)
 
-	const resetLinkCreationState = () => setLinkCreationState(LinkCreationState.NONE)
+	const resetLinkCreationState = () => setLinkCreationState(CreationState.NONE)
 
 
 	const getMyLinks = async () => {
@@ -78,18 +69,18 @@ export const ApiContextProvider = ({
 	}
 
 	const createLink = async (url: string, customSlug?: string) => {
-		setLinkCreationState(LinkCreationState.CREATING)
+		setLinkCreationState(CreationState.CREATING)
 		await simpleDataPost<Link>('/api/link/shorten', {
 			link: url,
 			custom_slug: customSlug, 
 		}, (data) => {
 			setError(null)
 			const newLinks = [ data, ...links ]
-			setLinkCreationState(LinkCreationState.CREATED)
+			setLinkCreationState(CreationState.CREATED)
 			setLinks(newLinks)
 			setTotalLinkCount(totalLinkCount + 1)
 		}).catch((e: APIError) => {
-			setLinkCreationState(LinkCreationState.FAILED)
+			setLinkCreationState(CreationState.FAILED)
 			setError(e.message)
 		})
 	}

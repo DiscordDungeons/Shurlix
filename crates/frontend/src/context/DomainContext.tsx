@@ -1,7 +1,7 @@
 import { createContext } from 'preact'
-import { PaginationContext } from './types'
-import { useEffect, useState } from 'preact/hooks'
-import { APIError, simpleDataFetch, simpleDelete } from './contextUtils'
+import { CreationState, PaginationContext } from './types'
+import { StateUpdater, useEffect, useState } from 'preact/hooks'
+import { APIError, simpleDataFetch, simpleDataPost, simpleDataPut, simpleDelete } from './contextUtils'
 import { PaginatedResponse } from './ApiContext'
 import { toast } from 'react-toastify'
 
@@ -20,6 +20,9 @@ export type IDomainContext = PaginationContext<Domain> & {
 	deleteDomain: (id: number) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	updateDomain: (id: number, url: string) => Promise<void>,
+	resetCreationState: () => Promise<void>,
+	creationState: StateUpdater<CreationState>,
+	error: string | null,
 }
 
 export const DomainContext = createContext<IDomainContext>(null)
@@ -28,10 +31,16 @@ export const DomainContext = createContext<IDomainContext>(null)
 export const DomainContextProvider = ({
 	children,
 }) => {
+	const [ error, setError ] = useState<string>(null)
+
 	const [ items, setItems ] = useState<Domain[]>([])
 	const [ totalCount, setTotalCount ] = useState(0)
 	const [ currentPage, setCurrentPage ] = useState(1)
 	const [ perPage, setPerPage ] = useState(10)
+	const [ creationState, setCreationState ] = useState<CreationState>(CreationState.NONE)
+
+	const resetCreationState = () => setCreationState(CreationState.NONE)
+
 
 	const getDomains = async () => {
 		simpleDataFetch<PaginatedResponse<Domain>>(`/api/domains?page=${currentPage}&per_page=${perPage}`, data => {
@@ -42,7 +51,7 @@ export const DomainContextProvider = ({
 	}
 
 	const deleteDomain = async (id: number) => {
-		await simpleDelete(`/api/domain/${id}`, () => {
+		await simpleDelete(`/api/domains/${id}`, () => {
 			const itemClone = [...items]
 
 			const newItems = itemClone.filter(item => item.id !== id)
@@ -56,8 +65,33 @@ export const DomainContextProvider = ({
 		})
 	}
 
-	const updateDomain = async (id: number, url: string) => {
+	const updateDomain = async (id: number, domain: string) => {
+		await simpleDataPut(`/api/domains/${id}`, { domain }, () => {
+			const itemClone = [...items]
 
+			const updatedItems = itemClone.map(item =>
+				item.id === id ? { ...item, domain } : item,
+			)
+
+			setItems(updatedItems)
+
+			toast.success('Domain updated.')
+		}).catch((e: APIError) => {
+			toast.error(e.message)
+		})
+	}
+
+	const createDomain = async (domain: string) => {
+		setCreationState(CreationState.CREATING)
+		await simpleDataPost<Domain>('/api/domains/create', { domain }, (data) => {
+			setError(null)
+			setCreationState(CreationState.CREATED)
+			setItems([ data, ...items ])
+			setTotalCount(totalCount + 1)
+		}).catch((e: APIError) => {
+			setCreationState(CreationState.FAILED)
+			setError(e.message)
+		})
 	}
 
 	useEffect(() => {
@@ -67,15 +101,19 @@ export const DomainContextProvider = ({
 	return (
 		<DomainContext.Provider
 			value={{
-				getDomains,
+				error,
 				items,
 				totalCount,
 				currentPage,
 				perPage,
+				creationState,
+				getDomains,
 				setCurrentPage,
 				setPerPage,
 				deleteDomain,
 				updateDomain,
+				createDomain,
+				resetCreationState,
 			}}
 		>
 			{children}

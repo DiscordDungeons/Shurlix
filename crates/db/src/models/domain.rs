@@ -42,6 +42,12 @@ impl Domain {
 	pub fn get_total_count(conn: &mut DbConnection) -> QueryResult<i64> {
 		domains::table.count().get_result(conn)
 	}
+
+	pub fn set_domain(&self, domain: String, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+		diesel::update(domains::table.filter(domains::id.eq(self.id)))
+			.set(domains::domain.eq(domain))
+			.execute(conn)
+	} 
 }
 
 #[derive(Debug, Insertable)]

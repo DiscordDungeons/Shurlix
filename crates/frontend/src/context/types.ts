@@ -8,3 +8,14 @@ export type PaginationContext<T> = {
 	// eslint-disable-next-line no-unused-vars
 	setPerPage: (page: number) => void,
 }
+
+export enum CreationState {
+	// eslint-disable-next-line no-unused-vars
+	NONE = 'NONE',
+	// eslint-disable-next-line no-unused-vars
+	CREATING = 'CREATING',
+	// eslint-disable-next-line no-unused-vars
+	CREATED = 'CREATED',
+	// eslint-disable-next-line no-unused-vars
+	FAILED = 'FAILED',
+}

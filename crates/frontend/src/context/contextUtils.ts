@@ -46,8 +46,32 @@ export const simpleDataPost = async <T>(
 	} else {
 		throw new APIError(requestData.message, request.status)
 	}
+}
+
+
+export const simpleDataPut = async <T>(
+	url: string,
+	data: Record<string, any>,
+	setFn: (data: T) => void,
+): Promise<void> => {
+	const request = await fetch(url, {
+		method: 'PUT',
+		body: JSON.stringify(data),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	const requestData = await request.json()
+
+	if (request.ok) {
+		setFn(requestData)
+	} else {
+		throw new APIError(requestData.message, request.status)
+	}
 
 }
+
 
 export const simpleDelete = async <T>(url: string, setFn: (data: T) => void): Promise<void> => {
 	const request = await fetch(url, {
