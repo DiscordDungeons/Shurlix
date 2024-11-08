@@ -28,6 +28,7 @@ Cargo.lock
 
 data/
 .env
+config.toml
 
 # Diesel
 

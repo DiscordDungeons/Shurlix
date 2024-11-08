@@ -1,0 +1,30 @@
+# Database configuration
+[database]
+url = "postgres://username:password@localhost/shurlix"
+
+# Application configuration
+[app]
+shortened_link_length = 8
+allow_anonymous_shorten = true
+allow_registering = true
+base_url = ""
+enable_email_verification = true
+email_verification_ttl = "1h"
+
+# Security settings
+[security]
+jwt_secret = ""
+min_password_strength = 4
+
+# SMTP (Email) configuration
+[smtp]
+enabled = true # True or False
+username = ""
+password = ""
+from = ""
+host = ""
+port = ""
+
+# Setup status (don't touch this, it's handled automatically).
+[setup]
+setup_done = false
