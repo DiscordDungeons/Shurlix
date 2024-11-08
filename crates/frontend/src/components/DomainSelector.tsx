@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'preact/hooks'
+import { useContext, useEffect } from 'preact/hooks'
 import { DomainRepositoryContext } from '../context/DomainRepositoryContext'
 
 type Props = {
@@ -14,7 +14,7 @@ export const DomainSelector = ({
 	const { domains } = useContext(DomainRepositoryContext)
 
 	useEffect(() => {
-		onSelect(domains[0].id)
+		if (domains[0]) onSelect(domains[0].id)
 	}, [domains])
 
 	return (

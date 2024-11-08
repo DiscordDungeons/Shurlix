@@ -209,7 +209,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
     - [ ] Initial setup flow
       - [ ] Add admin account
       - [ ] Setup first domain
-      - [ ] Check settings (maybe move them into db?)
+      - [ ] Check settings (move them into .yml file)
 - [x] Enable / Disable anonymous shortening
 - [ ] API
     - [ ] Links

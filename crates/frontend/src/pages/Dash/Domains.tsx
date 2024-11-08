@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'preact/hooks'
+import { useContext, useRef, useState } from 'preact/hooks'
 import { RequireAdmin } from '../../components/HoC/RequireAdmin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
 import { Domain, DomainContext } from '../../context/DomainContext'
@@ -119,25 +119,25 @@ const InternalDomains = () => {
 				)}
 			>
 				{creationState == CreationState.CREATING && (
-					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md dark:bg-blue-900 dark:border-blue-700 dark:text-blue-300">
 						Creating Domain...
 					</div>
 				)}
 
 				{creationState == CreationState.CREATED && (
-					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md dark:bg-green-900 dark:border-green-700 dark:text-green-300">
 						Created Domain!
 					</div>
 				)}
 
 				{error && (
-					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md dark:bg-red-900 dark:border-red-700 dark:text-red-300">
 						{error}
 					</div>
 				)}
 
 				{formError && (
-					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md dark:bg-red-900 dark:border-red-700 dark:text-red-300">
 						{formError}
 					</div>
 				)}

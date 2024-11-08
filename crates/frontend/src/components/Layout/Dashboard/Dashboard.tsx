@@ -56,8 +56,8 @@ export const Dashboard = ({
 			</aside>
 
 			{/* Main content */}
-			<main class="flex-1 bg-gray-100 text-black">
-				<header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+			<main class="flex-1 bg-gray-100 dark:bg-gray-900 text-black dark:text-white">
+				<header class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 px-6 py-4 flex justify-between items-center">
 					{/* Dashboard title */}
 					<div class="flex items-center px-3 py-2 w-1/3">
 						<h1 class="text-lg">{title}</h1>

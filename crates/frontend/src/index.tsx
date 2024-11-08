@@ -16,6 +16,7 @@ import { DomainsPage } from './pages/Dash/Domains.js'
 import { ProviderComposer } from './components/ProviderComposer.js'
 import { DomainContextProvider } from './context/DomainContext.js'
 import { DomainRepositoryContextProvider } from './context/DomainRepositoryContext.js'
+import { SetupRouter } from './pages/Setup/index.js'
 
 const providers = [
 	LocationProvider,
@@ -36,6 +37,8 @@ export function App() {
 				<Route path="/dash/register" component={RegisterPage} />
 				<Route path="/dash/links" component={LinkList} />
 				<Route path="/dash/domains" component={DomainsPage} />
+				<Route path="/setup" component={SetupRouter} />
+				<Route path="/setup/*" component={SetupRouter} />
 				<Route default component={NotFound} />
 			</Router>
 		</ProviderComposer>

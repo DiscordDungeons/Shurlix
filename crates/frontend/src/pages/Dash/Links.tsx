@@ -113,25 +113,25 @@ const InternalLinkList = () => {
 				)}
 			>
 				{linkCreationState == CreationState.CREATING && (
-					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-blue-100 border border-blue-300 text-blue-800 rounded w-full max-w-md dark:bg-blue-900 dark:border-blue-700 dark:text-blue-300">
 						Creating Link...
 					</div>
 				)}
 
 				{linkCreationState == CreationState.CREATED && (
-					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md dark:bg-green-900 dark:border-green-700 dark:text-green-300">
 						Created Link!
 					</div>
 				)}
 
 				{error && (
-					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md dark:bg-red-900 dark:border-red-700 dark:text-red-300">
 						{error}
 					</div>
 				)}
 
 				{formError && (
-					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md dark:bg-red-900 dark:border-red-700 dark:text-red-300">
 						{formError}
 					</div>
 				)}
@@ -186,7 +186,7 @@ const InternalLinkList = () => {
 					<div>
 						<div class="mt-4">
 							<button
-								class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+								class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded dark:bg-purple-800 dark:hover:bg-purple-700 dark:text-gray-200"
 								onClick={() => {
 									setIsModalOpen(true)
 									resetLinkCreationState()
@@ -194,6 +194,7 @@ const InternalLinkList = () => {
 							>
 								Create new
 							</button>
+
 						</div>
 					</div>
 				</div>

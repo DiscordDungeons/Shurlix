@@ -56,7 +56,7 @@ export const Home = () => {
 	if (!allowCreateAnonymousLinks) {
 		return (
 			<div class="home h-full w-full flex items-center justify-center dark:bg-gray-600">
-				<div>
+				<div class="text-center">
 					<h1 class="text-9xl font-sans text-violet-600 font-bold my-8 dark:text-rose-400">Shurlix</h1>
 				</div>
 			</div>
@@ -66,7 +66,7 @@ export const Home = () => {
 	return (
 		<div class="home h-full w-full flex items-center justify-center dark:bg-gray-600">
 			<div>
-				<h1 class="text-9xl font-sans text-violet-600 font-bold my-8 dark:text-rose-400">Shurlix</h1>
+				<h1 class="text-9xl font-sans text-violet-600 font-bold my-8 dark:text-rose-400 text-center">Shurlix</h1>
 				<form class="" onSubmit={(e) => e.preventDefault()}>
 					{shortLink && (
 						<div class="mb-6 p-4 bg-green-100 border border-green-300 text-green-800 rounded w-full max-w-md">
@@ -106,6 +106,7 @@ export const Home = () => {
 							select={(
 								<DomainSelector
 									onSelect={setDomainId}
+									value={domainId}
 								/>
 							)}
 						/>
