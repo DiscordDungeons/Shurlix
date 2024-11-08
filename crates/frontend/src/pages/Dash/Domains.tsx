@@ -197,7 +197,7 @@ const InternalDomains = () => {
 						<>
 							<button
 								type="button"
-								class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none"
+								class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent dark:text-blue-400 dark:hover:text-blue-600 text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none"
 								onClick={() => {
 									setUpdateItemId(item.id)
 									setIsUpdateModalOpen(true)
