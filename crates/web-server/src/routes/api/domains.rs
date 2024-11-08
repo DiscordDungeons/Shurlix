@@ -6,7 +6,7 @@ use axum::{
 };
 
 use db::{
-	models::{Domain, NewDomain},
+	models::{Domain, NewDomain, UpdateDomain},
 	DbPool,
 };
 use serde::{Deserialize, Serialize};
@@ -109,7 +109,7 @@ async fn update_domain(
     Extension(pool): Extension<DbPool>,
 	AuthedUser(user): AuthedUser,
     Path(id): Path<i32>,
-	Json(payload): Json<CreateDomain>,
+	Json(payload): Json<UpdateDomain>,
 ) -> APIResponse<GenericMessage> {
     if !is_admin(user) {
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
@@ -119,21 +119,34 @@ async fn update_domain(
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
-	if !is_url(&payload.domain) {
+	if payload.domain.is_some() && !is_url(&payload.domain.clone().unwrap()) {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Provided domain is not a valid URL.")));
 	}
 
-	let stripped_domain = strip_protocol(&payload.domain)
-		.map_err(|e| (StatusCode::BAD_REQUEST, GenericMessage::from_string(e.to_string())))?;
+	let domain = match &payload.domain {
+        Some(domain) => match strip_protocol(&domain.clone()) {
+            Ok(domain) => Some(domain),
+            Err(e) => return Err((StatusCode::BAD_REQUEST, GenericMessage::from_string(e.to_string()))),
+        },
+        None => return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Failed to parse domain."))),
+    };
+
+	let update_values = UpdateDomain {
+		domain: domain.clone(),
+		public: payload.public,
+	};
 
 	// Check if the new domain already exists
-	if let Ok(_) = Domain::get_by_domain(stripped_domain.clone(), conn) {
-		return Err((StatusCode::CONFLICT, GenericMessage::new("Domain already exists.")));
+	
+	if let Some(domain) = domain.clone() {
+		if let Ok(_) = Domain::get_by_domain(domain, conn) {
+			return Err((StatusCode::CONFLICT, GenericMessage::new("Domain already exists.")));
+		}
 	}
 
     let domain = Domain::get_by_id(id, conn).map_err(|_| (StatusCode::NOT_FOUND, GenericMessage::new("Domain not found")))?;
 
-    match domain.set_domain(stripped_domain, conn) {
+    match domain.update(update_values, conn) {
         Ok(_) => Ok((StatusCode::OK, GenericMessage::new("Updated."))),
         Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error."))),
     }

@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{schema::domains, DbConnection};
 
@@ -12,6 +12,13 @@ pub struct Domain {
 	pub public: bool,
 	pub created_at: NaiveDateTime,
 	pub updated_at: NaiveDateTime,
+}
+
+#[derive(AsChangeset, Clone, Debug, Deserialize)]
+#[diesel(table_name = crate::schema::domains)]
+pub struct UpdateDomain {
+	pub domain: Option<String>,
+	pub public: Option<bool>,
 }
 
 impl Domain {
@@ -67,6 +74,10 @@ impl Domain {
 		diesel::update(domains::table.filter(domains::id.eq(self.id)))
 			.set(domains::public.eq(public))
 			.execute(conn)
+	}
+
+	pub fn update(&self, values: UpdateDomain, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+		diesel::update(domains::table.find(self.id)).set(&values).execute(conn)
 	}
 }
 

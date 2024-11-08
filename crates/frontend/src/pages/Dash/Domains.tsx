@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from 'preact/hooks'
+import { useContext, useEffect, useRef, useState } from 'preact/hooks'
 import { RequireAdmin } from '../../components/HoC/RequireAdmin'
 import { Dashboard } from '../../components/Layout/Dashboard/Dashboard'
 import { Domain, DomainContext } from '../../context/DomainContext'
@@ -8,6 +8,7 @@ import { ConfigContext } from '../../context/ConfigContext'
 import { stripProtocol } from '../../util/misc'
 import { CreationState } from '../../context/types'
 import { isValidUrl } from '../../util/validator'
+import SliderCheckbox from '../../components/SliderCheck'
 
 const InternalDomains = () => {
 	const {
@@ -19,8 +20,12 @@ const InternalDomains = () => {
 	const [ isCreationModalOpen, setIsCreationModalOpen ] = useState(false)
 	const [ isUpdateModalOpen, setIsUpdateModalOpen ] = useState(false)
 
+	const [ isDomainChanged, setIsDomainChanged ] = useState(false)
+	const [ initialDomain, setInitialDomain ] = useState('')
+
 	const [ formError, setFormError ] = useState<string>(null)
 	const [ domain, setDomain ] = useState<string>(null)
+	const [ isPublicChecked, setIsPublicChecked ] = useState(false)
 
 	const { baseUrl } = useContext(ConfigContext)
 
@@ -53,20 +58,37 @@ const InternalDomains = () => {
 		}
 
 		if(isCreationModalOpen) {
-			await createDomain(domain)
+			await createDomain(isDomainChanged ? domain : null, isPublicChecked)
 		} else if(isUpdateModalOpen) {
-			await updateDomain(updateItemId, domain)
+			await updateDomain(updateItemId, isDomainChanged ? domain : null, isPublicChecked)
 		}
 	}
 
 	const onCloseCreationModal = () => {
 		setFormError(null)
+		setDomain(null)
+		setIsPublicChecked(false)
 		setIsCreationModalOpen(false)
 		setIsUpdateModalOpen(false)
 		resetCreationState()
 	}
 
-	
+	const onUpdateDomain = (item: Domain) => {
+		setIsPublicChecked(item.public)
+		setDomain(item.domain)
+		setInitialDomain(item.domain)
+		setUpdateItemId(item.id)
+		setIsUpdateModalOpen(true)
+		setIsDomainChanged(false)
+	}
+
+	useEffect(() => {
+		if (domain !== initialDomain) {
+		  setIsDomainChanged(true)
+		} else {
+		  setIsDomainChanged(false)
+		}
+	  }, [domain])
 
 	if (!items) {
 		getDomains()
@@ -114,7 +136,7 @@ const InternalDomains = () => {
 						onClick={onCreateDomain}
 						class="bg-blue-500 text-white px-4 py-2 rounded-md"
 					>
-						Create
+						{isCreationModalOpen ? 'Create' : 'Update' }
 					</button>
 				)}
 			>
@@ -161,6 +183,12 @@ const InternalDomains = () => {
 							onChange={e => setDomain(e.target.value)}
 						/>
 					</div>
+
+					<div class="flex justify-between pt-6">
+						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Public</label>
+
+						<SliderCheckbox onChange={() => setIsPublicChecked(!isPublicChecked)} checked={isPublicChecked} />
+					</div>
 				</form>
 			</Modal>
 
@@ -191,16 +219,15 @@ const InternalDomains = () => {
 					setCurrentPage={setCurrentPage}
 					currentPage={currentPage}
 					data={items}
-					titles={[ 'Domain', 'Created at' ]}
-					valueOrder={[ 'domain', 'created_at' ]}
+					titles={[ 'Domain', 'Public', 'Created at' ]}
+					valueOrder={[ 'domain', 'public', 'created_at' ]}
 					action={(item: Domain) => (
-						<>
+						<div class="flex justify-around">
 							<button
 								type="button"
 								class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent dark:text-blue-400 dark:hover:text-blue-600 text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none"
 								onClick={() => {
-									setUpdateItemId(item.id)
-									setIsUpdateModalOpen(true)
+									onUpdateDomain(item)
 								}}
 								disabled={item.domain == stripProtocol(baseUrl)}
 							>
@@ -217,7 +244,7 @@ const InternalDomains = () => {
 							>
 								Delete
 							</button>
-						</>
+						</div>
 					)}
 				/>
 			</div>

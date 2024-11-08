@@ -8,6 +8,7 @@ import { toast } from 'react-toastify'
 export type Domain = {
 	id: number,
 	domain: string,
+	public: boolean,
 	created_at: string,
 	updated_at: string,
 }
@@ -15,11 +16,11 @@ export type Domain = {
 export type IDomainContext = PaginationContext<Domain> & {
 	getDomains: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
-	createDomain: (url: string) => Promise<void>,
+	createDomain: (url: string, isPublic: boolean) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	deleteDomain: (id: number) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
-	updateDomain: (id: number, url: string) => Promise<void>,
+	updateDomain: (id: number, url: string, isPublic: boolean) => Promise<void>,
 	resetCreationState: () => void,
 	creationState: StateUpdater<CreationState>,
 	error: string | null,
@@ -65,8 +66,8 @@ export const DomainContextProvider = ({
 		})
 	}
 
-	const updateDomain = async (id: number, domain: string) => {
-		await simpleDataPut(`/api/domains/${id}`, { domain }, () => {
+	const updateDomain = async (id: number, domain: string, isPublic: boolean) => {
+		await simpleDataPut(`/api/domains/${id}`, { domain, public: isPublic }, () => {
 			const itemClone = [...items]
 
 			const updatedItems = itemClone.map(item =>
@@ -81,9 +82,9 @@ export const DomainContextProvider = ({
 		})
 	}
 
-	const createDomain = async (domain: string) => {
+	const createDomain = async (domain: string, isPublic: boolean) => {
 		setCreationState(CreationState.CREATING)
-		await simpleDataPost<Domain>('/api/domains/create', { domain }, (data) => {
+		await simpleDataPost<Domain>('/api/domains/create', { domain, public: isPublic }, (data) => {
 			setError(null)
 			setCreationState(CreationState.CREATED)
 			setItems([ data, ...items ])

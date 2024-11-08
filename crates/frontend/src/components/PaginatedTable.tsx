@@ -78,7 +78,7 @@ export const PaginatedTable = ({
 								<tr class="odd:bg-white even:bg-gray-100 dark:odd:bg-gray-800 dark:even:bg-gray-700" key={`entry-${i}`}>
 									{valueOrder.map((value, j) => (
 										<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200" key={`item-${i}-${j}`}>
-											{entry[value]}
+											{entry[value]?.toString()}
 										</td>
 									))}
 									{action && (

@@ -44,6 +44,7 @@ export type ILoginContext = {
 
 //@ts-ignore
 export const LoginContext = createContext<ILoginContext>({
+	//@ts-ignore
 	user: {
 		is_admin: false,
 	},
@@ -106,7 +107,8 @@ export const LoginContextProvider = ({
 			localStorage.setItem('isLoggedIn', 'false')
 			if (shouldRoute) {
 				setLoginRedirectMessage('Logged out.')
-				route('/dash/login')
+				console.log('route', route)
+				window.location.href = '/dash/login'
 			}
 		}).catch(e => {
 			toast.error('Logout failed?')

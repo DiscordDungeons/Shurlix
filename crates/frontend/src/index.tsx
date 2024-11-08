@@ -17,8 +17,10 @@ import { ProviderComposer } from './components/ProviderComposer.js'
 import { DomainContextProvider } from './context/DomainContext.js'
 import { DomainRepositoryContextProvider } from './context/DomainRepositoryContext.js'
 import { SetupRouter } from './pages/Setup/index.js'
+import { ThemeContextProvider } from './context/ThemeContext.js'
 
 const providers = [
+	ThemeContextProvider,
 	LocationProvider,
 	ConfigContextProvider,
 	LoginContextProvider,

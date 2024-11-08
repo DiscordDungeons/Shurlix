@@ -1,44 +1,27 @@
-import { useState, useEffect } from 'preact/hooks'
+import { useContext } from 'preact/hooks'
 
 import './style.css'
+import { ThemeContext } from '../../../context/ThemeContext'
 
 const DarkModeToggle = () => {
-	const [ isDarkMode, setIsDarkMode ] = useState(() => {
-		// Check local storage for saved theme on initial render
-		const savedTheme = localStorage.getItem('theme')
-		return savedTheme === 'dark' // Set initial state based on saved theme
-	})
-
-	const toggleDarkMode = () => {
-		setIsDarkMode((prev) => !prev)
-	}
-
-	useEffect(() => {
-		if (isDarkMode) {
-			document.documentElement.classList.add('dark')
-			localStorage.setItem('theme', 'dark')
-		} else {
-			document.documentElement.classList.remove('dark')
-			localStorage.setItem('theme', 'light')
-		}
-	}, [isDarkMode])
+	const { theme, setTheme } = useContext(ThemeContext)
 
 	return (
-		<label className="flex items-center cursor-pointer">
+		<label className="flex items-center cursor-pointer select-none">
 			<div className="relative">
 				<input
 					type="checkbox"
-					checked={isDarkMode}
-					onChange={toggleDarkMode}
+					checked={theme === 'dark'}
+					onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
 					className="sr-only" // Hide the default checkbox
 				/>
 				<div className="block bg-gray-200 dark:bg-gray-700 w-14 h-8 rounded-full" />
 				<div
 					className={`dot flex items-center justify-center absolute left-1 top-1 w-6 h-6 rounded-full transition-transform ${
-						isDarkMode ? 'translate-x-full bg-gray-800' : 'bg-white'
+						theme === 'dark' ? 'translate-x-full bg-gray-800' : 'bg-white'
 					}`}
 				>
-					{isDarkMode ? '🌙' : '☀️'}
+					{theme === 'dark' ? '🌙' : '☀️'}
 				</div>
 			</div>
 		</label>
