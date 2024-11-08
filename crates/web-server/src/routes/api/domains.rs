@@ -18,6 +18,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug)]
 struct CreateDomain {
 	domain: String,
+    public: Option<bool>,
 }
 
 async fn create_domain(
@@ -47,6 +48,7 @@ async fn create_domain(
 
 	let new_domain = NewDomain {
 		domain: stripped_domain,
+        public: payload.public,
 	};
 
 	match new_domain.insert(conn) {
@@ -82,7 +84,7 @@ async fn delete_domain(
 	Ok((StatusCode::OK, GenericMessage::new("Domain deleted.")))
 }
 
-async fn get_domains(
+async fn get_paged_domains(
 	Extension(pool): Extension<DbPool>,
 	AuthedUser(user): AuthedUser,
 	Query(pagination): Query<PaginationQuery>,
@@ -137,10 +139,46 @@ async fn update_domain(
     }
 }
 
+async fn get_public_domains(
+    Extension(pool): Extension<DbPool>,
+) -> APIResponse<Vec<Domain>> {
+    let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
+
+    match Domain::get_public(conn) {
+        Ok(domains) => Ok((StatusCode::OK, Json(domains))),
+        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))
+    }
+}
+
+async fn get_all_domains(
+    Extension(pool): Extension<DbPool>,
+	AuthedUser(user): AuthedUser,
+) -> APIResponse<Vec<Domain>> {
+    let conn = &mut pool
+		.get()
+		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
+    
+    if is_admin(user) {
+		match Domain::get_all(conn) {
+            Ok(domains) => Ok((StatusCode::OK, Json(domains))),
+            Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))
+        }
+	} else {
+        match Domain::get_public(conn) {
+            Ok(domains) => Ok((StatusCode::OK, Json(domains))),
+            Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))
+        }
+    }
+}
+
 // Starts at /api/domains
 pub fn domains_router() -> Router {
 	Router::new()
-		.route("/", get(get_domains))
+		.route("/", get(get_paged_domains))
+		.route("/public", get(get_public_domains))
+		.route("/all", get(get_all_domains))
 		.route("/create", post(create_domain))
 		.route("/:id", delete(delete_domain))
 		.route("/:id", put(update_domain))

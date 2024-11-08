@@ -30,7 +30,7 @@ export type IApiContext = {
 	totalLinkCount: number,
 	getMyLinks: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
-	createLink: (url: string, customSlug?: string) => Promise<void>,
+	createLink: (url: string, domainId: number, customSlug?: string) => Promise<void>,
 	resetLinkCreationState: () => void,
 	// eslint-disable-next-line no-unused-vars
 	deleteLink: (slug: string) => Promise<void>,
@@ -68,10 +68,11 @@ export const ApiContextProvider = ({
 		})
 	}
 
-	const createLink = async (url: string, customSlug?: string) => {
+	const createLink = async (url: string, domainId: number, customSlug?: string) => {
 		setLinkCreationState(CreationState.CREATING)
 		await simpleDataPost<Link>('/api/link/shorten', {
 			link: url,
+			domain_id: domainId,
 			custom_slug: customSlug, 
 		}, (data) => {
 			setError(null)

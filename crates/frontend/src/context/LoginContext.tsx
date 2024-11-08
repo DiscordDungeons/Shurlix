@@ -1,10 +1,10 @@
 import { createContext } from 'preact'
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { APIError, simpleDataFetch, simpleDataPost, simpleDelete } from './contextUtils'
 import { useLocation } from 'preact-iso'
 import { toast } from 'react-toastify'
 
-type User = {
+export type User = {
     id: number,
     username: string,
 	is_admin: boolean,
@@ -42,7 +42,16 @@ export type ILoginContext = {
 	updateUser: (values: UpdateUser) => Promise<void>,
 }
 
-export const LoginContext = createContext<ILoginContext>(null)
+//@ts-ignore
+export const LoginContext = createContext<ILoginContext>({
+	user: {
+		is_admin: false,
+	},
+	error: null,
+	loginRedirectMessage: null,
+	loginRedirectTo: null,
+	isDeletingAccount: false,
+})
 
 export const LoginContextProvider = ({
 	children,
@@ -145,6 +154,10 @@ export const LoginContextProvider = ({
 		})
 	}
 
+	useEffect(() => {
+		if(!user) fetchMe()
+	}, [])
+	
 	return (
 		<LoginContext.Provider
 			value={{

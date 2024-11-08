@@ -20,7 +20,7 @@ export type IDomainContext = PaginationContext<Domain> & {
 	deleteDomain: (id: number) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	updateDomain: (id: number, url: string) => Promise<void>,
-	resetCreationState: () => Promise<void>,
+	resetCreationState: () => void,
 	creationState: StateUpdater<CreationState>,
 	error: string | null,
 }

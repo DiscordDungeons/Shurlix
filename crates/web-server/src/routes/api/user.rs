@@ -6,7 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use db::{
-	models::{Link, NewUser, NewVerificationToken, SanitizedUser, UpdateUser, User, VerificationToken},
+	models::{Link, LinkWithDomain, NewUser, NewVerificationToken, SanitizedUser, UpdateUser, User, VerificationToken},
 	DbPool,
 };
 use email_address::EmailAddress;
@@ -268,7 +268,7 @@ async fn my_links(
 	AuthedUser(user): AuthedUser,
 	Query(pagination): Query<PaginationQuery>,
 	Extension(pool): Extension<DbPool>,
-) -> APIResponse<PaginatedResponse<Link>> {
+) -> APIResponse<PaginatedResponse<LinkWithDomain>> {
 	let owner_id: Option<i32> = user.map(|u| u.id);
 
 	if owner_id.is_none() {
@@ -281,10 +281,17 @@ async fn my_links(
 
 	let items = Link::get_by_owner_id_paginated(owner_id.unwrap(), pagination.page, pagination.per_page, conn)
 		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
+
+	let items = items.iter().map(|(link, domain)| {
+		LinkWithDomain::new(link.clone(), domain.clone())
+	}).collect();
+
 	let total_count = Link::get_total_count(owner_id.unwrap(), conn)
 		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 
-	Ok((StatusCode::OK, Json(PaginatedResponse::<Link> { items, total_count })))
+
+
+	Ok((StatusCode::OK, Json(PaginatedResponse::<LinkWithDomain> { items, total_count })))
 }
 
 async fn logout_user(jar: CookieJar) -> CookiedAPIResponse<GenericMessage> {

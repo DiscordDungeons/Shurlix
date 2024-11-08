@@ -10,6 +10,7 @@ export type Props = {
 	icon: ComponentChildren,
 	onSubmit: () => void,
 	placeholder: string,
+	select?: ComponentChildren,
 }
 
 export const Input = ({
@@ -20,7 +21,8 @@ export const Input = ({
 	buttonDisabled,
 	icon,
 	onSubmit,
-	placeholder
+	placeholder,
+	select,
 }: Props) => {
 	return (
 		<div class="flex items-center border border-gray-200 rounded-lg overflow-hidden dark:border-gray-800">
@@ -29,6 +31,8 @@ export const Input = ({
 					{icon}
 				</span>
 			)}
+
+			{select}
 			<input
 				type={type}
 				class="w-full border-none outline-none placeholder-gray-400 p-2 h-12 dark:placeholder-gray-200"

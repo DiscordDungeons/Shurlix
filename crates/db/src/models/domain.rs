@@ -9,6 +9,7 @@ use crate::{schema::domains, DbConnection};
 pub struct Domain {
 	pub id: i32,
 	pub domain: String,
+	pub public: bool,
 	pub created_at: NaiveDateTime,
 	pub updated_at: NaiveDateTime,
 }
@@ -24,6 +25,19 @@ impl Domain {
 
 	pub fn delete_by_id(id: i32, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
 		diesel::delete(domains::table.filter(domains::id.eq(id))).execute(conn)
+	}
+
+	pub fn get_public(conn: &mut DbConnection) -> Result<Vec<Domain>, diesel::result::Error> {
+		domains::table
+			.order_by(domains::created_at.desc())
+			.filter(domains::public.eq(true))
+			.load::<Domain>(conn)
+	}
+
+	pub fn get_all(conn: &mut DbConnection) -> Result<Vec<Domain>, diesel::result::Error> {
+		domains::table
+			.order_by(domains::created_at.desc())
+			.load::<Domain>(conn)
 	}
 
 	pub fn get_paginated(
@@ -47,13 +61,20 @@ impl Domain {
 		diesel::update(domains::table.filter(domains::id.eq(self.id)))
 			.set(domains::domain.eq(domain))
 			.execute(conn)
-	} 
+	}
+
+	pub fn set_public(&self, public: bool, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
+		diesel::update(domains::table.filter(domains::id.eq(self.id)))
+			.set(domains::public.eq(public))
+			.execute(conn)
+	}
 }
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = crate::schema::domains)]
 pub struct NewDomain {
 	pub domain: String,
+	pub public: Option<bool>,
 }
 
 impl NewDomain {

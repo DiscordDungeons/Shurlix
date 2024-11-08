@@ -15,8 +15,6 @@ export const LoginPage = () => {
 	
 
 	const login = async () => {
-		console.log(loginFormRef)
-
 		if (!loginFormRef.current.checkValidity()) return
 
 		

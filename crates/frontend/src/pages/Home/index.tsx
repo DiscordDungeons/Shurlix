@@ -2,6 +2,8 @@ import { useContext, useState } from 'preact/hooks'
 import './style.css'
 import { Input } from '../../components/Input'
 import { ConfigContext } from '../../context/ConfigContext'
+import { DomainSelector } from '../../components/DomainSelector'
+
 
 export const Home = () => {
 	const { allowCreateAnonymousLinks, baseUrl } = useContext(ConfigContext)
@@ -9,6 +11,8 @@ export const Home = () => {
 	const [ longLink, setLongLink ] = useState('')
 	const [ shortLink, setShortLink ] = useState('')
 	const [ canCreateLink, setCanCreateLink ] = useState(false)
+	const [ domainId, setDomainId ] = useState(null)
+
 
 	const onSubmit = async () => {
 		// Todo: Notification about having shortened
@@ -20,6 +24,7 @@ export const Home = () => {
 			},
 			body: JSON.stringify({
 				link: longLink,
+				domain_id: domainId,
 			}),
 		})
 
@@ -43,7 +48,6 @@ export const Home = () => {
 		try {
 			// Todo: Notification about having copied
 			await navigator.clipboard.writeText(shortLink)
-			console.log('Copied to clipboard:', shortLink)
 		} catch (err) {
 			console.error('Failed to copy:', err)
 		}
@@ -99,6 +103,11 @@ export const Home = () => {
 							buttonDisabled={!canCreateLink}
 							onSubmit={onSubmit}
 							placeholder={'Enter link'}
+							select={(
+								<DomainSelector
+									onSelect={setDomainId}
+								/>
+							)}
 						/>
 					)}
 				</form>

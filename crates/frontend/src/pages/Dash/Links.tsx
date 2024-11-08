@@ -6,6 +6,7 @@ import { Modal } from '../../components/Modal'
 import { isValidUrl } from '../../util/validator'
 import { PaginatedTable } from '../../components/PaginatedTable'
 import { CreationState } from '../../context/types'
+import { DomainSelector } from '../../components/DomainSelector'
 
 const InternalLinkList = () => {
 	const {
@@ -23,13 +24,13 @@ const InternalLinkList = () => {
 	const [ deleteLinkSlug, setDeleteLinkSlug ] = useState<string>(null)
 	const [ isDeleteModalOpen, setIsDeleteModalOpen ] = useState<boolean>(false)
 
+	const [ domainId, setDomainId ] = useState(null)
+
 	// Calculate total pages
 	const totalPages = Math.ceil(totalLinkCount / perPage)
 
 	// Handler for changing pages
 	
-
-
 	if (!links) {
 		getMyLinks()
 
@@ -51,7 +52,7 @@ const InternalLinkList = () => {
 			return
 		}
 
-		await createLink(url, customSlug)
+		await createLink(url, domainId, customSlug)
 	}
 
 	const onCloseModal = () => {
@@ -66,7 +67,6 @@ const InternalLinkList = () => {
 	}
 
 	const onDeleteLink = () => {
-		console.log('Delete slug', deleteLinkSlug)
 		deleteLink(deleteLinkSlug)
 		setDeleteLinkSlug(null)
 		setIsDeleteModalOpen(false)
@@ -144,6 +144,14 @@ const InternalLinkList = () => {
 					}}
 				>
 					<div>
+						<label>Domain</label>
+						<DomainSelector
+							value={domainId}
+							onSelect={setDomainId}
+						/>
+					</div>
+
+					<div>
 						<label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300">URL</label>
 						<input
 							required
@@ -196,8 +204,8 @@ const InternalLinkList = () => {
 					setCurrentPage={setCurrentLinkPage}
 					currentPage={currentLinkPage}
 					data={links}
-					titles={[ 'Slug', 'Custom Slug', 'Original Link', 'Created At', 'Updated At' ]}
-					valueOrder={[ 'slug', 'custom_slug', 'original_link', 'created_at', 'updated_at' ]}
+					titles={[ 'Domain', 'Slug', 'Custom Slug', 'Original Link', 'Created At', 'Updated At' ]}
+					valueOrder={[ 'domain', 'slug', 'custom_slug', 'original_link', 'created_at', 'updated_at' ]}
 					action={(link: Link) => (
 						<button
 							type="button"

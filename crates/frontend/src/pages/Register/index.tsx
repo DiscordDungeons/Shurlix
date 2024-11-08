@@ -5,7 +5,7 @@ import { JSX } from 'preact/jsx-runtime'
 import { isValidEmail } from '../../util/validator'
 
 
-
+// TODO: Make this work?
 export const RegisterPage = () => {	
 	const { route } = useLocation()
 

@@ -27,7 +27,7 @@ export const RequireAdmin = (WrappedComponent: any) => {
 
 		// eslint-disable-next-line react-hooks/rules-of-hooks
 		useEffect(() => {
-			loginContext.fetchMe()
+			if(!loginContext.user) loginContext.fetchMe()
 		}, [])
 
 		if (!loginContext.user) {

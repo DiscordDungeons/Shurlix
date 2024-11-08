@@ -3,7 +3,7 @@ use crate::{
 	config::Config,
 	constants,
 	extensions::auth::AuthedUser,
-	util::{self, is_url, starts_with_any},
+	util::{self, is_admin, is_url, starts_with_any},
 };
 use axum::{
 	extract::Path,
@@ -12,7 +12,7 @@ use axum::{
 	Extension, Json, Router,
 };
 use db::{
-	models::{Link, NewLink},
+	models::{Domain, Link, LinkWithDomain, NewLink},
 	DbPool,
 };
 
@@ -30,8 +30,8 @@ async fn create_link(
 	Extension(pool): Extension<DbPool>,
 	AuthedUser(user): AuthedUser,
 	Json(payload): Json<CreateLink>,
-) -> APIResponse<Link> {
-	let owner_id: Option<i32> = user.map(|u| u.id);
+) -> APIResponse<LinkWithDomain> {
+	let owner_id: Option<i32> = user.clone().map(|u| u.id);
 
 	if !config.allow_anonymous_shorten && owner_id.is_none() {
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
@@ -69,6 +69,13 @@ async fn create_link(
 			return Err((StatusCode::CONFLICT, GenericMessage::new("Slug already exists.")));
 		}
 	}
+	
+	let domain = Domain::get_by_id(payload.domain_id, conn).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
+
+	if !domain.public && !is_admin(user) {
+		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action."))); 
+	}
+
 	let slug = util::generate_unique_string(config.shortened_link_length);
 
 	let new_link = NewLink {
@@ -81,8 +88,10 @@ async fn create_link(
 
 	let link = new_link.insert(conn);
 
+	let created_link = LinkWithDomain::new(link, domain.domain);
+
 	// Return a response
-	Ok((StatusCode::CREATED, Json(link)))
+	Ok((StatusCode::CREATED, Json(created_link)))
 }
 
 async fn delete_link(
