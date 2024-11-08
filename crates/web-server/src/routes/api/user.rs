@@ -36,7 +36,9 @@ use crate::{
 struct RegisterRequest {
 	username: String,
 	password: String,
-	email: String, // Optional field
+	confirm_password: String,
+	email: String,
+	confirm_email: String,
 }
 
 #[derive(Deserialize)]
@@ -122,6 +124,14 @@ async fn register_user(
 	Extension(email): Extension<Email>,
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
+	if payload.email != payload.confirm_email {
+		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Emails don't match")));
+	}
+
+	if payload.password != payload.confirm_password {
+		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Passwords don't match")));
+	}
+
 	if !EmailAddress::is_valid(&payload.email) {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Invalid email")));
 	}

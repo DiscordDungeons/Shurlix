@@ -40,6 +40,8 @@ export type ILoginContext = {
 	changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	updateUser: (values: UpdateUser) => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	setLoginRedirectMessage: (message: string) => void,
 }
 
 //@ts-ignore
@@ -174,6 +176,7 @@ export const LoginContextProvider = ({
 				deleteAccount,
 				changePassword,
 				updateUser,
+				setLoginRedirectMessage,
 			}}
 		>
 			{children}

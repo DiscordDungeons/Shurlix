@@ -1,12 +1,13 @@
 import { useLocation } from 'preact-iso'
 import { useContext, useRef, useState } from 'preact/hooks'
-import { LoginContext } from '../../context/LoginContext'
 import { JSX } from 'preact/jsx-runtime'
 import { isValidEmail } from '../../util/validator'
+import { RegisterContext, RegisterContextProvider } from '../../context/RegisterContext'
+import { ToastContainer } from 'react-toastify'
 
-
-// TODO: Make this work?
-export const RegisterPage = () => {	
+const InternalRegisterPage = () => {	
+	const { validatePassword, passwordFeedback, registerUser, error } = useContext(RegisterContext)
+	
 	const { route } = useLocation()
 
 	const [ formError, setFormError ] = useState<string>(null)
@@ -19,10 +20,7 @@ export const RegisterPage = () => {
 		confirmEmail: '',
 		password: '',
 		confirmPassword: '',
-	})
-
-	// TODO: Check this against the API endpoint
-	const validatePassword = (pass: string) => true
+	}) 
 
 	const validateForm = () => {
 		const { username, email, confirmEmail, password, confirmPassword } = formData
@@ -71,15 +69,45 @@ export const RegisterPage = () => {
 
 		if (validateForm()) {
 			console.log('register')
+
+			registerUser({
+				confirm_email: formData.confirmEmail,
+				confirm_password: formData.confirmPassword,
+				email: formData.email,
+				password: formData.password,
+				username: formData.username,
+			})
 		}
 	}
 
 	return (
 		<div class="bg-gray-50 dark:bg-gray-900 flex justify-center items-center h-screen flex-col">
-
+			<ToastContainer />
 			{formError && (
 				<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
 					{formError}
+				</div>
+			)}
+
+			{error && (
+				<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full max-w-md">
+					{error}
+				</div>
+			)}
+
+			{(passwordFeedback?.feedback.suggestion_string || passwordFeedback?.feedback.warning_string) && (
+				<div className="mb-6 p-4 w-full max-w-md rounded">
+					{passwordFeedback?.feedback.suggestion_string && (
+						<div className="bg-yellow-100 border border-yellow-300 text-yellow-800 mb-4 p-4 rounded">
+							<strong>Password Suggestion:</strong> {passwordFeedback?.feedback.suggestion_string}
+						</div>
+					)}
+    
+					{passwordFeedback?.feedback.warning_string && (
+						<div className="bg-red-100 border border-red-300 text-red-800 p-4 rounded">
+							<strong>Password Warning:</strong> {passwordFeedback?.feedback.warning_string}
+						</div>
+					)}
 				</div>
 			)}
 
@@ -215,3 +243,9 @@ export const RegisterPage = () => {
 		</div>
 	)
 }
+
+export const RegisterPage = () => (
+	<RegisterContextProvider>
+		<InternalRegisterPage />
+	</RegisterContextProvider>
+)

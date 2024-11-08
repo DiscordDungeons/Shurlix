@@ -26,9 +26,9 @@ export const simpleDataFetch = async <T>(url: string, setFn: (data: T) => void):
 	}
 }
 
-export const simpleDataPost = async <T>(
+export const simpleDataPost = async <T, T2 = Record<string, any>>(
 	url: string,
-	data: Record<string, any>,
+	data: T2,
 	setFn: (data: T) => void,
 ): Promise<void> => {
 	const request = await fetch(url, {
