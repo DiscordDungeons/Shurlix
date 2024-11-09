@@ -4,42 +4,58 @@ type Props = {
 	children: ComponentChildren,
 }
 
+interface StepProps {
+	title: string;
+	isCompleted?: boolean;
+	isActive?: boolean;
+}
+
+
+function Step({ title, isCompleted, isActive }: StepProps) {
+	return (
+		<div
+			class={`flex items-center transition-colors duration-200 ${
+				isActive ? 'text-blue-400 font-semibold' : 'text-gray-400 dark:text-gray-500'
+			}`}
+		>
+			<span
+				class={`w-8 h-8 flex items-center justify-center rounded-full mr-3 transition-all duration-200 ${
+					isCompleted
+						? 'bg-blue-500 text-green-200'
+						: isActive
+						? 'border-2 border-blue-400 text-blue-400 dark:text-blue-300 dark:border-blue-300'
+						: 'border border-gray-500 text-gray-500 dark:border-gray-600 dark:text-gray-500'
+				}`}
+			>
+				{isCompleted ? '✔' : title.charAt(0).toUpperCase()}
+			</span>
+			<span>{title}</span>
+		</div>
+	);
+}
+
 export const SetupLayout = ({
 	children,
 }: Props) => {
+	
+
 	return (
-		<div class="bg-gray-50 dark:bg-gray-900 flex min-h-screen overflow-x-none text-black">
-			<aside class="w-1/3 p-16">
-				<div class="flex">
-					<div class="box w-8 h-8 bg-gray-300">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-8">
-							<path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-						</svg>
-					</div>
-					
-					Account Type
-				</div>
+		<div class="flex p-8 bg-gray-900 text-gray-200 min-h-screen">
+			{/* Sidebar */}
+			<div class="w-1/4 pr-8">
+				<nav class="space-y-6">
+					<Step title="Account Type" isCompleted />
+					<Step title="Account Settings" isActive />
+					<Step title="Business Information" />
+					<Step title="Billing Details" />
+					<Step title="Finished" />
+				</nav>
+			</div>
 
-				<div class="flex">
-					<div class="box active">
-						2
-					</div>
-					
-					Account Settings
-				</div>
-
-				<div class="flex">
-					<div class="box">
-						3
-					</div>
-					
-					Business Information
-				</div>
-
-			</aside>
-			<main class="flex-1 p-16">
+			{/* Main Content */}
+			<div class="flex-1 bg-gray-800 p-8 rounded-lg shadow-lg">
 				{children}
-			</main>
+			</div>
 		</div>
-	)
+	);
 }
