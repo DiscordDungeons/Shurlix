@@ -2,13 +2,12 @@ use chrono::Duration;
 use serde::{Deserialize, Serialize};
 use zxcvbn::Score;
 
+use crate::types::WrappedDuration;
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DatabaseConfig {
 	pub url: String,
 }
-
-#[derive(Debug)]
-struct WrappedDuration(chrono::Duration);
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AppConfig {
@@ -17,7 +16,7 @@ pub struct AppConfig {
 	pub allow_registering: bool,
 	pub base_url: String,
 	pub enable_email_verification: bool,
-	pub email_verification_ttl: Duration,
+	pub email_verification_ttl: WrappedDuration,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

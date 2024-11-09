@@ -36,3 +36,6 @@ humantime = "2.1.0"
 chrono = { version = "0.4.38", features = ["serde"] }
 tower = "0.5.1"
 toml = "0.8.19"
+
+[dev-dependencies]
+serde_test = "1.0.177"
