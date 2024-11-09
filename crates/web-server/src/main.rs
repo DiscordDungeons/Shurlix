@@ -1,6 +1,7 @@
 mod asset;
 mod common;
 mod config;
+mod toml_config;
 mod constants;
 mod extensions;
 mod hostname_router;
@@ -28,7 +29,8 @@ use extensions::domain::ExtractedDomain;
 use hostname_router::HostnameRouter;
 use mime_guess::from_path;
 use services::email::Email;
-use std::net::SocketAddr;
+use tokio::sync::oneshot;
+use std::{net::SocketAddr, sync::{Arc, Mutex}};
 
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 
@@ -89,12 +91,7 @@ async fn log_request(req: Request<Body>, next: Next) -> Result<Response, StatusC
 	Ok(response)
 }
 
-#[tokio::main]
-async fn main() {
-	env_logger::init();
-
-	let config = config::Config::new();
-
+async fn start_app(config: config::Config) {
 	let pool = db::create_pool(&config.database_url);
 	let email: Option<Email> = match config.smtp.enabled {
 		true => match Email::new(config.smtp.clone()) {
@@ -131,11 +128,52 @@ async fn main() {
 
 	let app = Router::new().fallback(hostname_router);
 
-	// run it
 	let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-	log::info!("listening on {}", addr);
+	log::info!("APP listening on {}", addr);
 	let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-	axum::serve(listener, app.into_make_service()).await.unwrap()
+	axum::serve(listener, app.into_make_service()).await.unwrap();
+}
+
+pub async fn start_setup(config: toml_config::Config, shutdown_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>, shutdown_rx: oneshot::Receiver<()>) {
+    let setup_router = Router::new()
+        .route("/", get(index))
+        .route("/:slug", get(handle_slug))
+        .route("/dash/*path", get(index))
+        .route("/assets/*path", get(asset_handler))
+        .nest("/api", routes::api::api_router())
+		.layer(Extension(config))
+        .layer(Extension(shutdown_tx));
+
+    // Run the listener
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    log::info!("SETUP listening on {}", addr);
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+
+    axum::serve(listener, setup_router.into_make_service())
+        .with_graceful_shutdown(async {
+            shutdown_rx.await.ok();
+        })
+        .await.unwrap();
+}
+
+#[tokio::main]
+async fn main() {
+	env_logger::init();
+
+	let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+	let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
+
+	let config = toml_config::Config::new();
+
+	if !config.setup_done {
+		start_setup(config, shutdown_tx, shutdown_rx).await;
+	}
+
+	let config = config::Config::new();
+
+	start_app(config).await;
+	
 }
 
 async fn handle_slug(

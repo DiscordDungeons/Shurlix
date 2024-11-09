@@ -4,6 +4,7 @@ pub mod config;
 pub mod domains;
 pub mod links;
 pub mod user;
+pub mod setup;
 
 // Starts at /api
 pub fn api_router() -> Router {
@@ -12,4 +13,5 @@ pub fn api_router() -> Router {
 		.nest("/user", user::user_router())
 		.nest("/config", config::config_router())
 		.nest("/domains", domains::domains_router())
+		.nest("/setup", setup::setup_router())
 }
