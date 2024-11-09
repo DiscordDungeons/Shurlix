@@ -159,14 +159,14 @@ pub async fn start_setup(config: toml_config::Config, shutdown_tx: Arc<Mutex<Opt
 #[tokio::main]
 async fn main() {
 	env_logger::init();
-
-	let (shutdown_tx, shutdown_rx) = oneshot::channel();
-
-	let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
-
+	
 	let config = toml_config::Config::new();
 
 	if !config.setup_done {
+			
+		let (shutdown_tx, shutdown_rx) = oneshot::channel();
+		let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
+
 		start_setup(config, shutdown_tx, shutdown_rx).await;
 	}
 
