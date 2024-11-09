@@ -162,7 +162,7 @@ async fn main() {
 	
 	let config = toml_config::Config::new();
 
-	if !config.setup_done {
+	if !config.setup.setup_done {
 			
 		let (shutdown_tx, shutdown_rx) = oneshot::channel();
 		let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
