@@ -73,7 +73,7 @@ async fn delete_domain(
 
 	let domain = Domain::get_by_id(id, conn).map_err(|_| (StatusCode::NOT_FOUND, GenericMessage::new("Domain not found")))?;
 
-    let base_url = strip_protocol(&config.base_url).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
+    let base_url = strip_protocol(&config.app.unwrap().base_url).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
     if domain.domain == base_url {
         return Err((StatusCode::FORBIDDEN, GenericMessage::new("You are not allowed to delete the base url.")));

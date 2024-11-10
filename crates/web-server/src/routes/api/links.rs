@@ -31,9 +31,10 @@ async fn create_link(
 	AuthedUser(user): AuthedUser,
 	Json(payload): Json<CreateLink>,
 ) -> APIResponse<LinkWithDomain> {
+	let app_config = config.app.unwrap();
 	let owner_id: Option<i32> = user.clone().map(|u| u.id);
 
-	if !config.allow_anonymous_shorten && owner_id.is_none() {
+	if !app_config.allow_anonymous_shorten && owner_id.is_none() {
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
@@ -70,13 +71,13 @@ async fn create_link(
 		}
 	}
 	
-	let domain = Domain::get_by_id(payload.domain_id, conn).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
+	let domain = Domain::get_by_id(payload.domain_id, conn).map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
 
 	if !domain.public && !is_admin(user) {
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action."))); 
 	}
 
-	let slug = util::generate_unique_string(config.shortened_link_length);
+	let slug = util::generate_unique_string(app_config.shortened_link_length);
 
 	let new_link = NewLink {
 		custom_slug: payload.custom_slug,

@@ -1,7 +1,6 @@
 mod asset;
 mod common;
 mod config;
-mod toml_config;
 mod constants;
 mod extensions;
 mod hostname_router;
@@ -21,6 +20,7 @@ use axum::{
 	Extension, Router,
 };
 use common::GenericMessage;
+use config::Config;
 use db::{
 	models::{Link, VerificationToken},
 	DbPool,
@@ -91,10 +91,13 @@ async fn log_request(req: Request<Body>, next: Next) -> Result<Response, StatusC
 	Ok(response)
 }
 
-async fn start_app(config: config::Config) {
-	let pool = db::create_pool(&config.database_url);
-	let email: Option<Email> = match config.smtp.enabled {
-		true => match Email::new(config.smtp.clone()) {
+async fn start_app(config: Config) {
+	let db_config = config.db.clone().unwrap();
+	let smtp_config = config.smtp.clone().unwrap();
+
+	let pool = db::create_pool(&db_config.url);
+	let email: Option<Email> = match smtp_config.enabled {
+		true => match Email::new(smtp_config.clone()) {
 			Ok(email) => Some(email),
 			Err(e) => panic!("Failed to create email service {:#?}", e),
 		},
@@ -134,11 +137,13 @@ async fn start_app(config: config::Config) {
 	axum::serve(listener, app.into_make_service()).await.unwrap();
 }
 
-pub async fn start_setup(config: toml_config::Config, shutdown_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>, shutdown_rx: oneshot::Receiver<()>) {
+pub async fn start_setup(config: config::Config, shutdown_tx: Arc<Mutex<Option<oneshot::Sender<()>>>>, shutdown_rx: oneshot::Receiver<()>) {
     let setup_router = Router::new()
         .route("/", get(index))
         .route("/:slug", get(handle_slug))
         .route("/dash/*path", get(index))
+        .route("/setup", get(index))
+        .route("/setup/*path", get(index))
         .route("/assets/*path", get(asset_handler))
         .nest("/api", routes::api::api_router())
 		.layer(Extension(config))
@@ -160,20 +165,23 @@ pub async fn start_setup(config: toml_config::Config, shutdown_tx: Arc<Mutex<Opt
 async fn main() {
 	env_logger::init();
 	
-	let config = toml_config::Config::new();
+	let mut config = config::Config::new();
+	
+	if config.file_exists() {
+		config.load_from_file();
+	}
+
+	println!("Config is {:#?}", config);
 
 	if !config.setup.setup_done {
 			
 		let (shutdown_tx, shutdown_rx) = oneshot::channel();
 		let shutdown_tx = Arc::new(Mutex::new(Some(shutdown_tx)));
 
-		start_setup(config, shutdown_tx, shutdown_rx).await;
+		start_setup(config.clone(), shutdown_tx, shutdown_rx).await;
 	}
 
-	let config = config::Config::new();
-
 	start_app(config).await;
-	
 }
 
 async fn handle_slug(

@@ -1,12 +1,32 @@
-use std::str::FromStr;
+use std::fs;
 
-use chrono::Duration;
-use dotenvy::dotenv;
-use humantime::parse_duration;
-use owo_colors::OwoColorize;
+use serde::{Deserialize, Serialize};
 use zxcvbn::Score;
 
-#[derive(Clone, Debug)]
+use crate::types::WrappedDuration;
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct DatabaseConfig {
+	pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct AppConfig {
+	pub shortened_link_length: usize,
+	pub allow_anonymous_shorten: bool,
+	pub allow_registering: bool,
+	pub base_url: String,
+	pub enable_email_verification: bool,
+	pub email_verification_ttl: WrappedDuration,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct SecurityConfig {
+	pub jwt_secret: String,
+	pub min_password_strength: Score,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SmtpConfig {
 	pub enabled: bool,
 	pub username: Option<String>,
@@ -16,168 +36,93 @@ pub struct SmtpConfig {
 	pub port: Option<u16>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct SetupConfig {
+	pub setup_done: bool,
+}
+
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Config {
-	pub database_url: String,
-	pub shortened_link_length: usize,
-	pub allow_anonymous_shorten: bool,
-	pub jwt_secret: String,
-	pub min_password_strength: Score,
-	pub allow_registering: bool,
-	pub base_url: String,
-	pub enable_email_verification: bool,
-	pub email_verification_ttl: Duration,
-	pub smtp: SmtpConfig,
+	pub db: Option<DatabaseConfig>,
+	pub app: Option<AppConfig>,
+	pub security: Option<SecurityConfig>,
+	pub smtp: Option<SmtpConfig>,
+	pub setup: SetupConfig,
 }
 
-#[derive(Debug)]
-struct WrappedDuration(chrono::Duration);
-
-impl FromStr for WrappedDuration {
-	type Err = String;
-
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		parse_duration(s)
-			.map(|d| WrappedDuration(Duration::seconds(d.as_secs() as i64)))
-			.map_err(|_| format!("Failed to parse '{}' as a Duration", s))
-	}
-}
+const CONFIG_FILE_PATH: &str = "Config.toml";
 
 impl Config {
-	pub fn get_var_required<T>(name: &str) -> T
-	where
-		T: FromStr,
-		T::Err: std::fmt::Debug,
-	{
-		let value = std::env::var(name).expect(&format!(
-			"{} {} {} {}",
-			"[CONFIG ERROR]".bright_red(),
-			"✗ ".red().bold(),
-			name.yellow(),
-			"not set in .env"
-		));
-
-		if value == "" {
-			panic!("{} {} {} {}", "[CONFIG ERROR]".bright_red(), "✗ ".red().bold(), name.yellow(), "not set in .env");
-		}
-
-		match value.parse::<T>() {
-			Ok(n) => n,
-			Err(e) => panic!(
-				"{} {} Failed to parse {}: {:?}",
-				"[CONFIG ERROR]".bright_red(),
-				"✗".red().bold(),
-				name.yellow(),
-				e
-			),
-		}
-	}
-
-	pub fn get_var<T>(name: &str) -> Option<T>
-	where
-		T: FromStr,
-		T::Err: std::fmt::Debug,
-	{
-		let value = std::env::var(name);
-
-		match value {
-			Ok(value) => match value.parse::<T>() {
-				Ok(n) => Some(n),
-				Err(e) => panic!(
-					"{} {} Failed to parse {}: {:?}",
-					"[CONFIG ERROR]".bright_red(),
-					"✗".red().bold(),
-					name.yellow(),
-					e
-				),
+	pub fn new() -> Self {
+		Self {
+			db: None,
+			app: None,
+			security: None,
+			smtp: None,
+			setup: SetupConfig {
+				setup_done: false,
 			},
-			Err(_) => None,
+		}
+	}
+	
+	pub fn write_to_file(&self) -> Result<(), Box<dyn std::error::Error>> {
+		let serialized = toml::to_string(&self)?;
+	
+		match fs::write(CONFIG_FILE_PATH, serialized) {
+			Ok(_) => Ok(()),
+			Err(e) => Err(format!("Failed to save config file: {}", e).into())
 		}
 	}
 
-	pub fn get_smtp_config() -> SmtpConfig {
-		let enabled = Config::get_var::<bool>("SMTP_ENABLED").unwrap_or(false);
-
-		let username = Config::get_var::<String>("SMTP_USERNAME");
-		let password = Config::get_var::<String>("SMTP_PASSWORD");
-		let from = Config::get_var::<String>("SMTP_FROM");
-		let host = Config::get_var::<String>("SMTP_HOST");
-		let port = Config::get_var::<u16>("SMTP_PORT");
-
-		if enabled {
-			let mut missing_vars = vec![];
-
-			for (name, value) in [
-				("SMTP_USERNAME", &username),
-				("SMTP_PASSWORD", &password),
-				("SMTP_FROM", &from),
-				("SMTP_HOST", &host),
-				("SMTP_PORT", &host),
-			] {
-				if value.is_none() || value.clone().is_some_and(|val| val == "") {
-					missing_vars.push(name);
-				}
-			}
-
-			if !missing_vars.is_empty() {
-				for name in &missing_vars {
-					eprintln!("{} {} is required if SMTP is enabled", "[CONFIG ERROR]".bright_red(), name.yellow());
-				}
-				panic!(
-					"{} {} missing required environment variables for SMTP configuration",
-					"[CONFIG ERROR]".bright_red(),
-					"✗".red().bold()
-				);
-			}
-		}
-
-		SmtpConfig {
-			enabled,
-			username,
-			password,
-			from,
-			host,
-			port,
+	pub fn file_exists(&self) -> bool {
+		match fs::exists(CONFIG_FILE_PATH) {
+			Ok(exists) => exists,
+			Err(e) => panic!("Failed to check if file exists, {}", e),
 		}
 	}
 
-	pub fn new() -> Config {
-		dotenv().ok();
-
-		let database_url = Config::get_var_required::<String>("DATABASE_URL");
-		let shortened_link_length = Config::get_var_required::<usize>("SHORTENED_LINK_LENGTH");
-		let jwt_secret = Config::get_var_required::<String>("JWT_SECRET");
-		let min_password_strength = Config::get_var_required::<u8>("MIN_PASSWORD_STRENGTH");
-		let base_url = Config::get_var_required::<String>("BASE_URL");
-		let allow_anonymous_shorten = Config::get_var_required::<bool>("ALLOW_ANOYMOUS_SHORTEN");
-		let allow_registering = Config::get_var_required::<bool>("ALLOW_REGISTERING");
-		let enable_email_verification = Config::get_var_required::<bool>("ALLOW_REGISTERING");
-		let email_verification_ttl = Config::get_var_required::<WrappedDuration>("EMAIL_VERIFICATION_TTL"); // TODO: Make this optional, but required if enable_email_verification is true
-
-		// TODO: Require smtp to be enabled if enable_email_verification is true
-
-		let min_password_strength = match Score::try_from(min_password_strength) {
-			Ok(score) => score,
-			Err(e) => panic!(
-				"{} {} Failed to parse {}: {:?}",
-				"[CONFIG ERROR]".bright_red(),
-				"✗".red().bold(),
-				"ENABLE_EMAIL_VERIFICATION".yellow(),
-				e
-			),
+	pub fn load_from_file(&mut self) {
+		if let Ok(false) = fs::exists(CONFIG_FILE_PATH) {
+			panic!("Failed to load config file, as it does not exist.");
 		};
 
-		Config {
-			database_url,
-			shortened_link_length,
-			allow_anonymous_shorten,
-			jwt_secret,
-			min_password_strength,
-			allow_registering,
-			enable_email_verification,
-			email_verification_ttl: email_verification_ttl.0,
-			base_url,
-			smtp: Config::get_smtp_config(),
-		}
+		let file_content = match fs::read_to_string(CONFIG_FILE_PATH) {
+			Ok(content) => content,
+			Err(e) => panic!("Failed to read config file. {}", e)
+		};
+
+		let config: Config = match toml::de::from_str(file_content.as_str()) {
+			Ok(config) => config,
+			Err(e) => panic!("Failed to deserialize config file: {}", e)
+		};
+
+		*self = config;
 	}
+
+	pub fn set_is_setup_done(&mut self, is: bool) {
+		self.setup.setup_done = is;
+	}
+}
+
+#[cfg(test)]
+mod test {
+    use crate::config::Config;
+
+	#[test]
+	fn parse_test() {
+		let toml_str = r#"
+		# Database configuration
+		[database]
+		url = "postgres://username:password@localhost/shurlix"
+
+		[setup]
+		setup_done = false
+		"#;
+
+		let config: Config = toml::de::from_str(toml_str).expect("Failed to parse TOML");
+		println!("{:?}", config);
+
+		assert!(true == true)
+	} 
 }

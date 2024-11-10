@@ -37,7 +37,7 @@ where
 
 				// Access a specific cookie if needed
 				if let Some(cookie) = cookie_jar.get("auth_token") {
-					let user_id = match decode_user_token(&cookie.value().to_string(), config.jwt_secret.as_bytes()) {
+					let user_id = match decode_user_token(&cookie.value().to_string(), config.security.unwrap().jwt_secret.as_bytes()) {
 						Some(user_id) => user_id,
 						None => return Ok(AuthedUser(None)),
 					};

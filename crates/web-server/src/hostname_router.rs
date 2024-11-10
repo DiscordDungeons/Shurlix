@@ -48,7 +48,7 @@ impl Handler<Request<Body>, ()> for HostnameRouter {
 					.unwrap();
 			}
 
-			let base_url = match strip_protocol(self.config.base_url.as_str()) {
+			let base_url = match strip_protocol(self.config.app.unwrap().base_url.as_str()) {
 				Ok(host) => host,
 				Err(_) => {
 					return Response::builder()

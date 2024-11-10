@@ -14,11 +14,14 @@ struct ConfigResponse {
 }
 
 async fn get_config(Extension(config): Extension<Config>) -> APIResponse<ConfigResponse> {
+	let app_config = config.app.unwrap();
+	let security_config = config.security.unwrap();
+
 	let response = ConfigResponse {
-		allow_anonymous_shorten: config.allow_anonymous_shorten,
-		allow_registering: config.allow_registering,
-		min_password_strength: config.min_password_strength,
-		base_url: config.base_url,
+		allow_anonymous_shorten: app_config.allow_anonymous_shorten,
+		allow_registering: app_config.allow_registering,
+		min_password_strength: security_config.min_password_strength,
+		base_url: app_config.base_url,
 	};
 
 	Ok((StatusCode::OK, Json(response)))

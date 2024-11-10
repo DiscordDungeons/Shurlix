@@ -124,6 +124,9 @@ async fn register_user(
 	Extension(email): Extension<Email>,
 	Json(payload): Json<RegisterRequest>,
 ) -> APIResponse<RegisteredUser> {
+	let app_config = config.app.unwrap();
+	let security_config = config.security.unwrap();
+
 	if payload.email != payload.confirm_email {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Emails don't match")));
 	}
@@ -138,7 +141,7 @@ async fn register_user(
 
 	let password_estimate = zxcvbn(&payload.password, &[]);
 
-	if password_estimate.score().lt(&config.min_password_strength) {
+	if password_estimate.score().lt(&security_config.min_password_strength) {
 		return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
 	}
 
@@ -174,13 +177,13 @@ async fn register_user(
 
 	// TODO: Send validation link (if REQUIRE_EMAIL_VALIDATION & SMTP configured)
 
-	if config.enable_email_verification {
+	if app_config.enable_email_verification {
 		let verification_token = generate_unique_string(32);
 
 		let new_token = NewVerificationToken {
 			user_id: user.id,
 			token: verification_token.clone(),
-			expires_at: (Utc::now() + config.email_verification_ttl).naive_utc(),
+			expires_at: (Utc::now() + app_config.email_verification_ttl).naive_utc(),
 		};
 
 		new_token.insert(conn);
@@ -191,12 +194,12 @@ async fn register_user(
 					.send_template::<VerificationEmail>(
 						&payload.email,
 						&VerificationEmail {
-							base_url: &config.base_url,
+							base_url: &app_config.base_url,
 							username: &payload.username,
 							verification_token: verification_token.as_str(),
 							ttl: format!(
 								"{}",
-								humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
+								app_config.email_verification_ttl
 							)
 							.as_str(),
 						},
@@ -221,6 +224,8 @@ async fn login_user(
 	Extension(pool): Extension<DbPool>,
 	Json(payload): Json<LoginRequest>,
 ) -> CookiedAPIResponse<LoginResponse> {
+	let security_config = config.security.unwrap();
+
 	let conn = &mut pool
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
@@ -243,7 +248,7 @@ async fn login_user(
 	// Verify the password
 	match argon2.verify_password(&payload.password.as_bytes(), &parsed_hash) {
 		Ok(_) => {
-			let token = encode_user_token(user.id, config.jwt_secret.as_bytes());
+			let token = encode_user_token(user.id, security_config.jwt_secret.as_bytes());
 
 			let cookie = Cookie::build(("auth_token", token.clone()))
 				.http_only(true) // Prevent JavaScript access
@@ -331,6 +336,7 @@ async fn update_password(
 	Extension(pool): Extension<DbPool>,
 	Json(payload): Json<ChangePasswordRequest>,
 ) -> APIResponse<GenericMessage> {
+	let security_config = config.security.unwrap();
 	let owner_id: Option<i32> = user.clone().map(|u| u.id);
 
 	if owner_id.is_none() {
@@ -358,7 +364,7 @@ async fn update_password(
 
 			let password_estimate = zxcvbn(&payload.new_password, &[]);
 
-			if password_estimate.score().lt(&config.min_password_strength) {
+			if password_estimate.score().lt(&security_config.min_password_strength) {
 				return Err((StatusCode::CONFLICT, GenericMessage::new("Password is not strong enough.")));
 			}
 
@@ -438,6 +444,8 @@ async fn update_user(
 	Extension(pool): Extension<DbPool>,
 	Json(payload): Json<UserUpdateRequest>,
 ) -> APIResponse<GenericMessage> {
+	let app_config = config.app.unwrap();
+	
 	if user.is_none() {
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
@@ -494,7 +502,7 @@ async fn update_user(
 			let new_token = NewVerificationToken {
 				user_id: user.id,
 				token: verification_token.clone(),
-				expires_at: (Utc::now() + config.email_verification_ttl).naive_utc(),
+				expires_at: (Utc::now() + app_config.email_verification_ttl).naive_utc(),
 			};
 
 			new_token.insert(conn);
@@ -505,12 +513,12 @@ async fn update_user(
 						.send_template::<VerificationEmail>(
 							&update_user.email.unwrap(),
 							&VerificationEmail {
-								base_url: &config.base_url,
+								base_url: &app_config.base_url,
 								username: &email_username,
 								verification_token: verification_token.as_str(),
 								ttl: format!(
 									"{}",
-									humantime::format_duration(config.email_verification_ttl.to_std().unwrap())
+									app_config.email_verification_ttl,
 								)
 								.as_str(),
 							},
