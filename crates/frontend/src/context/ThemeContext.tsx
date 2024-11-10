@@ -16,6 +16,8 @@ export const ThemeContextProvider = ({
 }) => {
 	const [ theme, setTheme ] = useState<AppTheme>(() => {
 		const savedTheme = localStorage.getItem('theme')
+		console.log("saved theme", savedTheme)
+
 		return savedTheme === 'dark' ? 'dark' : 'light'
 	})
 
