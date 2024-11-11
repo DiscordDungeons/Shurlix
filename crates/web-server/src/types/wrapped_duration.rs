@@ -5,7 +5,7 @@ use humantime::{format_duration, parse_duration};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, PartialEq, Copy)]
-pub struct WrappedDuration(chrono::Duration);
+pub struct WrappedDuration(pub chrono::Duration);
 
 impl WrappedDuration {
     pub fn new(duration: chrono::Duration) -> Self {

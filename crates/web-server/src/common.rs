@@ -20,4 +20,5 @@ impl GenericMessage {
 }
 
 pub type APIResponse<T> = Result<(StatusCode, Json<T>), (StatusCode, Json<GenericMessage>)>;
+pub type APIResultWithError<T, T2> = Result<(StatusCode, Json<T>), (StatusCode, Json<T2>)>;
 pub type CookiedAPIResponse<T> = Result<(CookieJar, Json<T>), (StatusCode, Json<GenericMessage>)>;

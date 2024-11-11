@@ -1,10 +1,16 @@
 use std::sync::{Arc, Mutex};
 
 use axum::{http::StatusCode, response::IntoResponse, routing::{get, post}, Extension, Json, Router};
+use serde::Serialize;
 use tokio::sync::oneshot;
 use toml;
 
-use crate::{common::{APIResponse, GenericMessage}, config::Config};
+use crate::{common::{APIResponse, APIResultWithError, GenericMessage}, config::Config};
+
+#[derive(Serialize)]
+struct SetConfigError {
+	pub errors: Vec<String>,
+}
 
 #[axum::debug_handler]
 async fn restart(
@@ -24,14 +30,18 @@ async fn restart(
 async fn set_initial_config(
 	Extension(mut config): Extension<Config>,
 	Json(payload): Json<Config>,
-) -> APIResponse<GenericMessage> {
+) -> APIResultWithError<GenericMessage, SetConfigError> {
 	println!("Payload {:#?}", payload);
 
-	config.set_is_setup_done(payload.setup.setup_done);
+	if let Err(errors) = payload.validate() {
+		return Err((StatusCode::BAD_REQUEST, Json(SetConfigError { errors })))
+	};
+
+	config.set(payload);
 
 	match config.write_to_file() {
 		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("ur mom"))),
-		Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new(e.to_string().as_str())))
+		Err(e) => Ok((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new(e.to_string().as_str())))
 	}
 }
 

@@ -93,16 +93,24 @@ async fn log_request(req: Request<Body>, next: Next) -> Result<Response, StatusC
 
 async fn start_app(config: Config) {
 	let db_config = config.db.clone().unwrap();
-	let smtp_config = config.smtp.clone().unwrap();
+	let smtp_config = config.smtp.clone();
 
 	let pool = db::create_pool(&db_config.url);
-	let email: Option<Email> = match smtp_config.enabled {
-		true => match Email::new(smtp_config.clone()) {
-			Ok(email) => Some(email),
-			Err(e) => panic!("Failed to create email service {:#?}", e),
-		},
-		false => Some(Email::default()),
-	};
+	let email: Option<Email> = smtp_config
+		.as_ref() // Avoid cloning `smtp_config` unnecessarily
+		.and_then(|config| {
+			if config.enabled {
+				match Email::new(config.clone()) {
+					Ok(email) => Some(email),
+					Err(e) => {
+						panic!("Failed to create email service {:#?}", e);
+					}
+				}
+			} else {
+				Some(Email::default())
+			}
+		})
+		.or_else(|| Some(Email::default()));
 
 	db::run_migrations(&pool.clone());
 
