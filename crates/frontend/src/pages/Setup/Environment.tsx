@@ -52,7 +52,14 @@ export const EnvironmentSetup = () => {
 			}
 
 			const lastKey = keys[keys.length - 1]
-			current[lastKey] = type === 'checkbox' ? checked : value
+			
+			if (type === 'checkbox') {
+				current[lastKey] = checked
+			} else if (type === 'number') {
+				current[lastKey] = value ? parseFloat(value) : NaN
+			} else {
+				current[lastKey] = value
+			}
 
 			return newConfig
 		})
@@ -95,10 +102,10 @@ export const EnvironmentSetup = () => {
 				<section>
 					<h2 class="text-xl font-semibold mb-2">Database Configuration</h2>
 					<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Settings for connecting to the database.</p>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 pb-1">
 						Database URL
 						<span class="text-red-500 ml-1">*</span>
-					
+			
 					</label>
 					<input type="text" name="db.url" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 						   value={config.db.url} onChange={handleChange} required />
@@ -108,7 +115,7 @@ export const EnvironmentSetup = () => {
 				<section>
 					<h2 class="text-xl font-semibold mb-2">Shortening Service Settings</h2>
 					<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Settings for link shortening options and permissions.</p>
-					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 pb-1">
 						Shortened Link Length
 						<span class="text-red-500 ml-1">*</span>
 					</label>
@@ -125,7 +132,7 @@ export const EnvironmentSetup = () => {
 					<h2 class="text-xl font-semibold mb-2">Authentication & Security</h2>
 					<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Options for managing user authentication and password security.</p>
 					<div>
-						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+						<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 pb-1">
 							JWT Secret
 							<span class="text-red-500 ml-1">*</span>
 						</label>
@@ -147,7 +154,7 @@ export const EnvironmentSetup = () => {
 						<label class="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Registering</label>
 						<SliderCheckbox checked={config.app.allow_registering} onChange={handleChange} name="app.allow_registering" />
 					</div>
-					<label class="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 flex items-center justify-between">
+					<label class="text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 flex items-center justify-between pb-1">
 						<span>
 							Minimum Password Strength
 							<span class="text-red-500 ml-1">*</span>
@@ -168,14 +175,14 @@ export const EnvironmentSetup = () => {
 					<h2 class="text-xl font-semibold mb-2">Service & Verification Settings</h2>
 					<p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Set base URLs and email verification settings.</p>
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Base URL</label>
-					<input type="text" name="app.base_url" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
+					<input type="text" name="app.base_url" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 pb-1"
 						   value={config.app.base_url} onChange={handleChange} placeholder="Enter base URL" />
 					<div class="flex items-center mt-4 justify-between">
 						<label class="text-sm font-medium text-gray-700 dark:text-gray-300">Enable Email Verification</label>
 						<SliderCheckbox checked={config.app.enable_email_verification} onChange={handleChange} name="app.enable_email_verification" />
 					</div>
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">Email Verification TTL</label>
-					<input type="text" name="app.email_verification_ttl" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
+					<input type="text" name="app.email_verification_ttl" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200 pb-1"
 						   value={config.app.email_verification_ttl} onChange={handleChange} />
 				</section>
 
@@ -191,32 +198,32 @@ export const EnvironmentSetup = () => {
 					{
 						config.smtp.enabled && (
 							<>
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 									SMTP Username
 									<span class="text-red-500 ml-1">*</span>
 									
 								</label>
 								<input type="text" name="smtp.username" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.username} onChange={handleChange} placeholder="Enter SMTP username" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 									SMTP Password
 									<span class="text-red-500 ml-1">*</span>
 								</label>
 								<input type="password" name="smtp.password" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.password} onChange={handleChange} placeholder="Enter SMTP password" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 									SMTP From Address
 									<span class="text-red-500 ml-1">*</span>
 								</label>
 								<input type="text" name="smtp.from" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.from} onChange={handleChange} placeholder="Enter from email address" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 									SMTP Host
 									<span class="text-red-500 ml-1">*</span>
 								</label>
 								<input type="text" name="smtp.host" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.host} onChange={handleChange} placeholder="Enter SMTP host" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 									SMTP Port
 									<span class="text-red-500 ml-1">*</span>
 								</label>

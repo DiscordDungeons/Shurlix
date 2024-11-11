@@ -7,6 +7,7 @@ export type IConfigContext = {
 	allowRegistering: boolean,
 	minPasswordStrength: number,
 	baseUrl: string,
+	setupDone: boolean,
 }
 
 export const ConfigContext = createContext<IConfigContext>({
@@ -14,6 +15,7 @@ export const ConfigContext = createContext<IConfigContext>({
 	allowRegistering: false,
 	minPasswordStrength: 0,
 	baseUrl: null,
+	setupDone: false,
 })
 
 type ConfigResponse = {
@@ -21,6 +23,7 @@ type ConfigResponse = {
 	allow_registering: boolean,
 	min_password_strength: number,
 	base_url: string,
+	setup_done: boolean,
 }
 
 export const ConfigContextProvider = ({
@@ -31,6 +34,7 @@ export const ConfigContextProvider = ({
 		allowRegistering: true,
 		minPasswordStrength: 0,
 		baseUrl: null,
+		setupDone: false,
 	})
 
 	useEffect(() => {
@@ -40,6 +44,7 @@ export const ConfigContextProvider = ({
 				allowRegistering: data.allow_registering,
 				minPasswordStrength: data.min_password_strength,
 				baseUrl: data.base_url,
+				setupDone: data.setup_done,
 			})
 		})
 	}, [])

@@ -180,8 +180,6 @@ async fn main() {
 		config.load_from_file();
 	}
 
-	println!("Config is {:#?}", config);
-
 	if !config.setup.setup_done {
 			
 		let (shutdown_tx, shutdown_rx) = oneshot::channel();

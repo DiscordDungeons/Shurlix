@@ -11,6 +11,7 @@ struct ConfigResponse {
 	allow_registering: bool,
 	min_password_strength: Score,
 	base_url: String,
+	setup_done: bool,
 }
 
 async fn get_config(Extension(config): Extension<Config>) -> APIResponse<ConfigResponse> {
@@ -22,6 +23,7 @@ async fn get_config(Extension(config): Extension<Config>) -> APIResponse<ConfigR
 		allow_registering: app_config.allow_registering,
 		min_password_strength: security_config.min_password_strength,
 		base_url: app_config.base_url,
+		setup_done: config.setup.setup_done,
 	};
 
 	Ok((StatusCode::OK, Json(response)))
