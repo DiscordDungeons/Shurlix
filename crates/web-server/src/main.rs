@@ -28,6 +28,7 @@ use db::{
 use extensions::domain::ExtractedDomain;
 use hostname_router::HostnameRouter;
 use mime_guess::from_path;
+use owo_colors::OwoColorize;
 use services::email::Email;
 use tokio::sync::oneshot;
 use std::{net::SocketAddr, sync::{Arc, Mutex}};
@@ -189,7 +190,14 @@ async fn main() {
 		start_setup(config.clone(), shutdown_tx, shutdown_rx).await;
 	}
 
-	start_app(config).await;
+	match config.validate() {
+		Ok(()) => start_app(config).await,
+		Err(errors) => {
+			for error in errors {
+				println!("{} {} {}", "[CONFIG ERROR]".bright_red(), "✗".red().bold(), error);
+			}
+		}
+	};
 }
 
 async fn handle_slug(
