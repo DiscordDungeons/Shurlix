@@ -193,19 +193,33 @@ export const EnvironmentSetup = () => {
 							<>
 								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
 									SMTP Username
+									<span class="text-red-500 ml-1">*</span>
+									
 								</label>
 								<input type="text" name="smtp.username" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.username} onChange={handleChange} placeholder="Enter SMTP username" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">SMTP Password</label>
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+									SMTP Password
+									<span class="text-red-500 ml-1">*</span>
+								</label>
 								<input type="password" name="smtp.password" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.password} onChange={handleChange} placeholder="Enter SMTP password" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">SMTP From Address</label>
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+									SMTP From Address
+									<span class="text-red-500 ml-1">*</span>
+								</label>
 								<input type="text" name="smtp.from" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.from} onChange={handleChange} placeholder="Enter from email address" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">SMTP Host</label>
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+									SMTP Host
+									<span class="text-red-500 ml-1">*</span>
+								</label>
 								<input type="text" name="smtp.host" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.host} onChange={handleChange} placeholder="Enter SMTP host" />
-								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">SMTP Port</label>
+								<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+									SMTP Port
+									<span class="text-red-500 ml-1">*</span>
+								</label>
 								<input type="number" name="smtp.port" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
 									value={config.smtp.port} onChange={handleChange} />
 							</>
