@@ -1,4 +1,4 @@
-export class APIError extends Error {
+export class APIError<T> extends Error {
 	statusCode: number
 
 	constructor(message: string, statusCode: number) {
@@ -44,7 +44,7 @@ export const simpleDataPost = async <T, T2 = Record<string, any>>(
 	if (request.ok) {
 		setFn(requestData)
 	} else {
-		throw new APIError(requestData.message, request.status)
+		throw new APIError(requestData, request.status)
 	}
 }
 
@@ -69,8 +69,8 @@ export const simpleDataPut = async <T>(
 	} else {
 		throw new APIError(requestData.message, request.status)
 	}
-
 }
+
 
 
 export const simpleDelete = async <T>(url: string, setFn: (data: T) => void): Promise<void> => {

@@ -29,6 +29,7 @@ async fn restart(
 
 async fn set_initial_config(
 	Extension(mut config): Extension<Config>,
+	Extension(shutdown_tx): Extension<Arc<Mutex<Option<oneshot::Sender<()>>>>>,
 	Json(payload): Json<Config>,
 ) -> APIResultWithError<GenericMessage, SetConfigError> {
 	println!("Payload {:#?}", payload);
@@ -40,7 +41,17 @@ async fn set_initial_config(
 	config.set(payload);
 
 	match config.write_to_file() {
-		Ok(_) => Ok((StatusCode::OK, GenericMessage::new("ur mom"))),
+		Ok(_) => {
+			let mut tx = shutdown_tx.lock().unwrap();
+
+			if let Some(sender) = tx.take() {
+				if let Err(_) = sender.send(()) {
+					eprintln!("Failed to send restart signal.");
+				}
+			}
+			
+			Ok((StatusCode::OK, GenericMessage::new("OK. Restarting.")))
+		},
 		Err(e) => Ok((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new(e.to_string().as_str())))
 	}
 }

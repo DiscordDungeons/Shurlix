@@ -16,27 +16,27 @@ interface StepProps {
 function Step({ title, isCompleted, isActive }: StepProps) {
 	return (
 	  <div
-		class={`flex items-center transition-colors duration-200 ${
+			class={`flex items-center transition-colors duration-200 ${
 		  isActive
-			? 'text-blue-600 dark:text-blue-300 font-semibold'  // Darker blue for light mode, lighter for dark mode
-			: 'text-gray-600 dark:text-gray-400'  // Darker gray for inactive states
-		}`}
+					? 'text-blue-600 dark:text-blue-300 font-semibold'  // Darker blue for light mode, lighter for dark mode
+					: 'text-gray-600 dark:text-gray-400'  // Darker gray for inactive states
+			}`}
 	  >
-		<span
+			<span
 		  class={`w-8 h-8 flex items-center justify-center rounded-full mr-3 transition-all duration-200 ${
-			isCompleted
+					isCompleted
 			  ? 'bg-blue-500 text-white dark:bg-blue-600 dark:text-green-200'  // Higher contrast with white text
 			  : isActive
 			  ? 'border-2 border-blue-600 text-blue-600 dark:text-blue-300 dark:border-blue-300'
 			  : 'border border-gray-500 text-gray-600 dark:border-gray-500 dark:text-gray-400'
 		  }`}
-		>
+			>
 		  {isCompleted ? '✔' : title.charAt(0).toUpperCase()}
-		</span>
-		<span>{title}</span>
+			</span>
+			<span>{title}</span>
 	  </div>
-	);
-  }
+	)
+}
 
 export const SetupLayout = ({
 	children,
@@ -48,8 +48,8 @@ export const SetupLayout = ({
 			{/* Sidebar */}
 			<div class="w-1/4 pr-8">
 				<nav class="space-y-6">
-				<Step title="Environment" isCompleted={completedSteps.includes(1)} isActive={currentStep === 1} />
-				<Step title="Initial Account" isCompleted={completedSteps.includes(2)} isActive={currentStep === 2}  />
+					<Step title="Environment" isCompleted={completedSteps.includes(1)} isActive={currentStep === 1} />
+					<Step title="Initial Account" isCompleted={completedSteps.includes(2)} isActive={currentStep === 2}  />
 				</nav>
 			</div>
 
@@ -58,5 +58,5 @@ export const SetupLayout = ({
 				{children}
 			</div>
 		</div>
-	);
+	)
 }
