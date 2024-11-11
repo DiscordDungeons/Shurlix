@@ -6,9 +6,7 @@ import { Config } from './types'
 import { generateSecret } from '../../util/misc'
 
 export const EnvironmentSetup = () => {
-	const { error, setConfig: setApiConfig } = useContext(SetupContext)
-
-	console.log('error is', error)
+	const { error, setConfig: setApiConfig, isLoading } = useContext(SetupContext)
 
 	const [ config, setConfig ] = useState<Config>({
 		db: {
@@ -66,6 +64,7 @@ export const EnvironmentSetup = () => {
 	}
 
 	const onSubmit = () => {
+		if (isLoading) return
 		setApiConfig(config)
 	}
 
@@ -84,7 +83,6 @@ export const EnvironmentSetup = () => {
 			{
 				error && (
 					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full dark:bg-red-900 dark:border-red-700 dark:text-red-300">
-						Failed to set variables:
 						{typeof error === 'string' ? (error) : (Array.isArray(error) && error.map((err) => (
 							<p key={err}>- {err}</p>
 						)))}
@@ -238,7 +236,13 @@ export const EnvironmentSetup = () => {
 			{/* Buttons */}
 			<div class="flex justify-between pt-8">
 				<button class="py-2 px-6 rounded-lg border border-gray-600 text-gray-300 hover:border-gray-500 hover:text-gray-400" disabled>Go Back</button>
-				<button class="py-2 px-6 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={onSubmit}>Continue</button>
+				<button class="py-2 px-6 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={onSubmit}>
+					{isLoading ? (
+						<span class="animate-spin inline-block w-5 h-5 border-4 border-t-transparent border-white rounded-full"></span>
+					) : (
+						'Continue'
+					)}
+				</button>
 			</div>
 
 		</SetupLayout>

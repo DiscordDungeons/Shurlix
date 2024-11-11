@@ -188,6 +188,10 @@ async fn main() {
 		start_setup(config.clone(), shutdown_tx, shutdown_rx).await;
 	}
 
+	if config.file_exists() {
+		config.load_from_file();
+	}
+
 	match config.validate() {
 		Ok(()) => start_app(config).await,
 		Err(errors) => {
