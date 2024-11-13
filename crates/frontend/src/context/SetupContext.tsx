@@ -16,6 +16,7 @@ export type ISetupContext = {
 	isLoading: boolean,
 	error: SetConfigResponse | null,
 	completedSteps: number[],
+	baseUrl: string,
 }
 
 export const SetupContext = createContext<ISetupContext>(null)
@@ -23,11 +24,12 @@ export const SetupContext = createContext<ISetupContext>(null)
 export const SetupContextProvider = ({
 	children,
 }) => {
-	const {route} = useLocation()
+	const { route } = useLocation()
 	
 	let [ error, setError ] = useState(null)
 	let [ isLoading, setIsLoading ] = useState(false)
 	let [ completedSteps, setCompletedSteps ] = useState([])
+	let [ baseUrl, setBaseUrl ] = useState('')
 
 	const setConfig = async (config: Config) => {
 		setIsLoading(true)
@@ -43,13 +45,14 @@ export const SetupContextProvider = ({
 	
 		if (request.ok) {
 			setError(null)
+			setBaseUrl(config.app.base_url)
 
 			try {
-				const response = await checkUrlWithRetries('/api/health', 3, 1000);
+				const response = await checkUrlWithRetries('/api/health', 3, 1000)
 				// Redirect after the promise resolves successfully
 				if (response.ok) {
 					setIsLoading(false)
-					setCompletedSteps([...completedSteps, 1])
+					setCompletedSteps([ ...completedSteps, 1 ])
 
 					route('/setup/user')  // replace with your actual redirect URL
 				}
@@ -75,6 +78,7 @@ export const SetupContextProvider = ({
 				error,
 				completedSteps,
 				isLoading,
+				baseUrl,
 			}}
 		>
 			{children}

@@ -32,7 +32,7 @@ export type ILoginContext = {
 	loginRedirectTo: string | null,
 	isDeletingAccount: boolean,
 	// eslint-disable-next-line no-unused-vars
-	loginUser: (email: string, password: string) => Promise<void>,
+	loginUser: (email: string, password: string, onLogin?: (() => void)) => Promise<void>,
 	logoutUser: () => void,
 	fetchMe: () => Promise<void>,
 	deleteAccount: () => Promise<void>,
@@ -67,18 +67,20 @@ export const LoginContextProvider = ({
 
 	const { route, path } = useLocation()
 
-	const loginUser = async (email: string, password: string) => {
+	const loginUser = async (email: string, password: string, onLogin) => {
 		simpleDataPost<LoginResponse>('/api/user/login', { email, password }, (data) => {
 			setError(null)
 			setLoginRedirectMessage(null)
 
 			setUser(data.user)
 			localStorage.setItem('isLoggedIn', 'true')
+			if (onLogin) onLogin()
 
 			if (loginRedirectTo) {
 				route(loginRedirectTo)
 				setLoginRedirectTo(null)
 			}
+
 		}).catch((e: APIError) => {
 			setError(e.message)
 		})

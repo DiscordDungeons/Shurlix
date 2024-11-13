@@ -76,7 +76,7 @@ const InternalRegisterPage = () => {
 				email: formData.email,
 				password: formData.password,
 				username: formData.username,
-			})
+			}, true, '/dash/login')
 		}
 	}
 

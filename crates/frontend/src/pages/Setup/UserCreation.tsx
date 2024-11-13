@@ -3,9 +3,17 @@ import { SetupLayout } from '../../components/Layout/Setup/SetupLayout'
 import { RegisterContext, RegisterContextProvider, RegisterUserRequest } from '../../context/RegisterContext'
 import { handleChange } from '../../util/form'
 import { isValidEmail } from '../../util/validator'
+import { LoginContext } from '../../context/LoginContext'
+import { SetupContext } from '../../context/SetupContext'
+import { DomainContext } from '../../context/DomainContext'
+import { useLocation } from 'preact-iso'
 
 const UserCreation = () => {
-	const { validatePassword, registerUser, error, isLoading } = useContext(RegisterContext)
+	const { validatePassword, registerUser, error, isLoading, passwordFeedback } = useContext(RegisterContext)
+	const { loginUser, user } = useContext(LoginContext)
+	const { baseUrl } = useContext(SetupContext)
+	const { createDomain } = useContext(DomainContext)
+	const { route } = useLocation()
 
 	const [ formError, setFormError ] = useState<string>(null)
 
@@ -60,9 +68,13 @@ const UserCreation = () => {
 		e.preventDefault()
 
 		if (validateForm()) {
-			console.log('register')
+			registerUser(formData, true, async () => {
+				loginUser(formData.email, formData.password, async () => {
+					await createDomain(baseUrl, true)
 
-			registerUser(formData, false)
+					route('/setup/finish')
+				})
+			})
 		}
 	}
 		
@@ -71,14 +83,27 @@ const UserCreation = () => {
 			{
 				(error || formError) && (
 					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full dark:bg-red-900 dark:border-red-700 dark:text-red-300">
-						{/* {typeof error === 'string' ? (error) : (Array.isArray(error) && error.map((err) => (
-							<p key={err}>- {err}</p>
-						)))} */}
 						{formError}
 						{error}
 					</div>
 				)
 			}
+
+			{(passwordFeedback?.feedback.suggestion_string || passwordFeedback?.feedback.warning_string) && (
+				<div className="mb-6 w-fullrounded">
+					{passwordFeedback?.feedback.suggestion_string && (
+						<div className="bg-yellow-100 border border-yellow-300 text-yellow-800 mb-4 p-4 rounded">
+							<strong>Password Suggestion:</strong> {passwordFeedback?.feedback.suggestion_string}
+						</div>
+					)}
+    
+					{passwordFeedback?.feedback.warning_string && (
+						<div className="bg-red-100 border border-red-300 text-red-800 p-4 rounded">
+							<strong>Password Warning:</strong> {passwordFeedback?.feedback.warning_string}
+						</div>
+					)}
+				</div>
+			)}
 
 			<h2 class="text-xl font-semibold mb-2">Initial User Creation</h2>
 			<p class="text-gray-400 mb-6">

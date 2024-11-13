@@ -113,6 +113,10 @@ impl User {
 	pub fn update(&self, values: UpdateUser, conn: &mut DbConnection) -> Result<usize, diesel::result::Error> {
 		diesel::update(users::table.find(self.id)).set(&values).execute(conn)
 	}
+
+	pub fn get_total_count(conn: &mut DbConnection) -> QueryResult<i64> {
+		users::table.count().get_result(conn)
+	}
 }
 
 #[derive(Debug, Insertable)]
@@ -121,6 +125,7 @@ pub struct NewUser {
 	pub username: String,
 	pub password_hash: String,
 	pub email: String,
+	pub is_admin: bool,
 }
 
 impl NewUser {

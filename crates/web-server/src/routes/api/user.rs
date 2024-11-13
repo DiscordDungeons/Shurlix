@@ -167,10 +167,14 @@ async fn register_user(
 		Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error"))),
 	};
 
+	let user_count = User::get_total_count(conn).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
+
+
 	let new_user = NewUser {
 		email: payload.email.clone(),
 		password_hash,
 		username: payload.username.clone(),
+		is_admin: user_count == 0,
 	};
 
 	let user = new_user.insert(conn);
