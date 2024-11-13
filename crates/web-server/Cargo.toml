@@ -1,6 +1,6 @@
 [package]
 name = "web-server"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 #build = "build.rs"
 
@@ -10,7 +10,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.7", default-features = false, features = ["json", "http1", "tokio", "macros", "query"] }
-db = { version = "0.1.0", path = "../db" }
+db = { version = "1.0.0", path = "../db" }
 tokio = { version = "1", default-features = false, features = ["macros", "fs", "rt-multi-thread"] }
 dotenvy = "0.15"
 serde = "1.0.210"
