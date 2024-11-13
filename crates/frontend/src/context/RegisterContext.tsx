@@ -18,7 +18,7 @@ type CheckPasswordResponse = {
 	feedback: PasswordFeedback | null,
 }
 
-type RegisterUserRequest = {
+export type RegisterUserRequest = {
 	username: string,
 	password: string,
 	confirm_password: string,
