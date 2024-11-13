@@ -112,7 +112,7 @@ impl Config {
 					("SMTP password (smtp.password)", smtp.password.as_deref()),
 					("SMTP 'from' address (smtp.from)", smtp.from.as_deref()),
 					("SMTP host (smtp.host)", smtp.host.as_deref()),
-					("SMTP port (smtp.port)", smtp.port.map(|_| "").as_deref()),
+					("SMTP port (smtp.port)", smtp.port.map(|_| "exists").as_deref()),
 				]
 				.iter()
 				.filter_map(|&(name, value)| if value.is_none() || value == Some("") { Some(name) } else { None })

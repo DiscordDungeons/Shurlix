@@ -1,14 +1,17 @@
-import { useState } from 'preact/hooks'
+import { useContext, useRef, useState } from 'preact/hooks'
 import { SetupLayout } from '../../components/Layout/Setup/SetupLayout'
-import { RegisterUserRequest } from '../../context/RegisterContext'
+import { RegisterContext, RegisterContextProvider, RegisterUserRequest } from '../../context/RegisterContext'
 import { handleChange } from '../../util/form'
+import { isValidEmail } from '../../util/validator'
 
+const UserCreation = () => {
+	const { validatePassword, registerUser, error, isLoading } = useContext(RegisterContext)
 
+	const [ formError, setFormError ] = useState<string>(null)
 
-export const UserCreation = () => {
-	const isLoading = false
+	const registerFormRef = useRef<HTMLFormElement>(null)
 
-	const [ user, setUser ] = useState<RegisterUserRequest>({
+	const [ formData, setFormData ] = useState<RegisterUserRequest>({
 		confirm_email: '',
 		confirm_password: '',
 		email: '',
@@ -16,16 +19,73 @@ export const UserCreation = () => {
 		username: '',
 	})
 
-	const onSubmit = () => {}
+	const validateForm = () => {
+		const { confirm_email, confirm_password, email, password, username } = formData
+	  
+		// Reset form error before validation
+		setFormError('')
+	  
+		if (!username.trim()) {
+		  setFormError('Username is required.')
+		  return false
+		}
+	  
+		if (!isValidEmail(email)) {
+		  setFormError('Please enter a valid email.')
+		  return false
+		}
+	  
+		if (email !== confirm_email) {
+		  setFormError('Emails do not match.')
+		  return false
+		}
+	  
+		if (!validatePassword(password)) {
+		  setFormError('Password does not meet the criteria.')
+		  return false
+		}
+	  
+		if (password !== confirm_password) {
+		  setFormError('Passwords do not match.')
+		  return false
+		}
+	  
+		// All validations passed
+		return true
+	}
+
+	
+
+	const onSubmit = (e: any) => {
+		e.preventDefault()
+
+		if (validateForm()) {
+			console.log('register')
+
+			registerUser(formData, false)
+		}
+	}
 		
 	return (
 		<SetupLayout currentStep={2} completedSteps={[1]}>
+			{
+				(error || formError) && (
+					<div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded w-full dark:bg-red-900 dark:border-red-700 dark:text-red-300">
+						{/* {typeof error === 'string' ? (error) : (Array.isArray(error) && error.map((err) => (
+							<p key={err}>- {err}</p>
+						)))} */}
+						{formError}
+						{error}
+					</div>
+				)
+			}
+
 			<h2 class="text-xl font-semibold mb-2">Initial User Creation</h2>
 			<p class="text-gray-400 mb-6">
 				Create the initial user account to gain access to the application. This account will have administrative privileges to configure and manage settings.
 			</p>
 
-			<form class="space-y-8" onSubmit={e => e.preventDefault()}>
+			<form class="space-y-8" onSubmit={e => e.preventDefault()} ref={registerFormRef}>
 
 				<section>
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
@@ -33,41 +93,40 @@ export const UserCreation = () => {
 						<span class="text-red-500 ml-1">*</span>
 					</label>
 					<input type="text" name="username" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
-						value={user.username} onChange={(e) => handleChange(e, setUser)} placeholder="Enter your username" />
+						value={formData.username} onChange={(e) => handleChange(e, setFormData)} placeholder="Enter your username" />
 					
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 						Email
 						<span class="text-red-500 ml-1">*</span>		
 					</label>
 					<input type="email" name="email" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
-						value={user.email} onChange={(e) => handleChange(e, setUser)} placeholder="you@example.com" />
+						value={formData.email} onChange={(e) => handleChange(e, setFormData)} placeholder="you@example.com" />
 
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 						Confirm Email
 						<span class="text-red-500 ml-1">*</span>		
 					</label>
 					<input type="email" name="confirm_email" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
-						value={user.confirm_email} onChange={(e) => handleChange(e, setUser)} placeholder="you@example.com" />
+						value={formData.confirm_email} onChange={(e) => handleChange(e, setFormData)} placeholder="you@example.com" />
 
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 						Password
 						<span class="text-red-500 ml-1">*</span>		
 					</label>
 					<input type="password" name="password" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
-						value={user.password} onChange={(e) => handleChange(e, setUser)} placeholder="••••••••" />
+						value={formData.password} onChange={(e) => handleChange(e, setFormData)} placeholder="••••••••" />
 
 					<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-4 pb-1">
 						Confirm Password
 						<span class="text-red-500 ml-1">*</span>		
 					</label>
 					<input type="password" name="confirm_password" class="mt-1 p-2 block w-full rounded-md bg-gray-50 dark:bg-gray-700 dark:text-gray-200"
-						value={user.confirm_password} onChange={(e) => handleChange(e, setUser)} placeholder="••••••••" />
+						value={formData.confirm_password} onChange={(e) => handleChange(e, setFormData)} placeholder="••••••••" />
 				</section>
 			</form>
 
 			{/* Buttons */}
 			<div class="flex justify-between pt-8">
-				<button class="py-2 px-6 rounded-lg border border-gray-600 text-gray-300 hover:border-gray-500 hover:text-gray-400">Go Back</button>
 				<button class="py-2 px-6 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" onClick={onSubmit}>
 					{isLoading ? (
 						<span class="animate-spin inline-block w-5 h-5 border-4 border-t-transparent border-white rounded-full" />
@@ -79,3 +138,9 @@ export const UserCreation = () => {
 		</SetupLayout>
 	)
 }	
+
+export const UserCreationPage = () => (
+	<RegisterContextProvider>
+		<UserCreation />
+	</RegisterContextProvider>
+)

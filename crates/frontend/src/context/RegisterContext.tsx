@@ -36,7 +36,8 @@ export type IRegisterContext = {
 	// eslint-disable-next-line no-unused-vars
 	validatePassword: (password: string) => Promise<boolean>,
 	// eslint-disable-next-line no-unused-vars
-	registerUser: (data: RegisterUserRequest) => Promise<void>,
+	registerUser: (data: RegisterUserRequest, shouldRoute: boolean) => Promise<void>,
+	isLoading: boolean,
 	passwordFeedback: CheckPasswordResponse | null,
 	error: string | null,
 }
@@ -52,9 +53,12 @@ export const RegisterContextProvider = ({
 
 	const [ passwordFeedback, setPasswordFeedback ] = useState(null)
 	const [ error, setError ] = useState<string>(null)
+	const [ isLoading, setIsLoading ] = useState<boolean>(false)
 
 	const validatePassword = async (password: string): Promise<boolean> => {
+		setIsLoading(true)
 		await simpleDataPost<CheckPasswordResponse>('/api/user/password', { password }, (data) => {
+			setIsLoading(false)
 			if (data.score >= minPasswordStrength) return true
 			setPasswordFeedback(data)
 
@@ -62,19 +66,26 @@ export const RegisterContextProvider = ({
 			return false
 		})
 
+		setIsLoading(false)
+
 		return
 	}
 
-	const registerUser = async (data: RegisterUserRequest) => {
+	const registerUser = async (data: RegisterUserRequest, shouldRoute = true) => {
+		setIsLoading(true)
+
 		await simpleDataPost<RegisterUserResponse, RegisterUserRequest>('/api/user/register', data, () => {
 			toast.success('Registered!')
 			setLoginRedirectMessage('Registered, please login!')
 
-			route('/dash/login')
+			if (shouldRoute) route('/dash/login')
 
+			setIsLoading(false)
 
 			return
 		}).catch((e: APIError) => {
+			setIsLoading(false)
+
 			setError(e.message)
 		}) 
 	}
@@ -86,6 +97,7 @@ export const RegisterContextProvider = ({
 				registerUser,
 				passwordFeedback,
 				error,
+				isLoading,
 			}}
 		>
 			{children}

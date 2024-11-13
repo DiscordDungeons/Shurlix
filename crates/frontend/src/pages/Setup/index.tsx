@@ -5,7 +5,7 @@ import { EnvironmentSetup } from './Environment'
 import { useContext } from 'preact/hooks'
 import { ConfigContext } from '../../context/ConfigContext'
 import { SetupLayout } from '../../components/Layout/Setup/SetupLayout'
-import { UserCreation } from './UserCreation'
+import { UserCreationPage } from './UserCreation'
 
 
 export const SetupRouter = () => {
@@ -19,7 +19,7 @@ export const SetupRouter = () => {
 		<SetupContextProvider>
 			<Router>
 				<Route path="/" component={EnvironmentSetup} />
-				<Route path="/user" component={UserCreation} />
+				<Route path="/user" component={UserCreationPage} />
 				<Route default component={NotFound} />
 			</Router>
 		</SetupContextProvider>
