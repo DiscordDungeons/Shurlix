@@ -17,7 +17,6 @@ RUN USER=root apt install -y nodejs
 RUN USER=root cargo new --bin shurlix
 WORKDIR /shurlix
 
-COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
 COPY ./src ./src
