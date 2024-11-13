@@ -20,7 +20,7 @@ use axum::{
 	Extension, Router,
 };
 use common::GenericMessage;
-use config::Config;
+use config::{Config, LoadConfigResult};
 use db::{
 	models::{Link, VerificationToken},
 	DbPool,
@@ -175,10 +175,13 @@ async fn main() {
 	env_logger::init();
 	
 	let mut config = config::Config::new();
-	
-	if config.file_exists() {
-		config.load_from_file();
-	}
+
+	let _ = if let true = config.file_exists() {
+		Some(config.load_from_file())
+	} else {
+		None
+	};
+
 
 	if !config.setup.setup_done {
 			

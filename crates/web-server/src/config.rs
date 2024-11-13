@@ -51,6 +51,14 @@ pub struct Config {
 	pub setup: SetupConfig,
 }
 
+pub enum LoadConfigResult {
+	FileDoesNotExist,
+	CantReadFile,
+	FailedDeserialization,
+	FileEmpty,
+	Ok,
+}
+
 const CONFIG_FILE_PATH: &str = "Config.toml";
 
 impl Config {
@@ -150,22 +158,35 @@ impl Config {
 		}
 	}
 
-	pub fn load_from_file(&mut self) {
+	pub fn load_from_file(&mut self) -> LoadConfigResult {
 		if let Ok(false) = fs::exists(CONFIG_FILE_PATH) {
-			panic!("Failed to load config file, as it does not exist.");
+			eprintln!("Failed to load config file, as it does not exist.");
+			return LoadConfigResult::FileDoesNotExist;
 		};
 
 		let file_content = match fs::read_to_string(CONFIG_FILE_PATH) {
 			Ok(content) => content,
-			Err(e) => panic!("Failed to read config file. {}", e)
+			Err(e) => {
+				eprintln!("Failed to read file {}", e);
+				return LoadConfigResult::CantReadFile
+			}
 		};
+
+		if file_content == "" {
+			return LoadConfigResult::FileEmpty
+		}
 
 		let config: Config = match toml::de::from_str(file_content.as_str()) {
 			Ok(config) => config,
-			Err(e) => panic!("Failed to deserialize config file: {}", e)
+			Err(e) => {
+				eprintln!("Failed to deserialize config file: {}", e);
+				return LoadConfigResult::FailedDeserialization
+			}
 		};
 
 		*self = config;
+
+		LoadConfigResult::Ok
 	}
 
 	pub fn set(&mut self, new: Config) {
