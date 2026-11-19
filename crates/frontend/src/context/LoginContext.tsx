@@ -15,13 +15,13 @@ export type User = {
 }
 
 type LoginResponse = {
-	token: String,
 	user: User,
 }
 
 type UpdateUser = {
 	username: string | null,
 	email: string | null,
+	password: string | null,
 }
 
 

@@ -61,7 +61,6 @@ struct RegisteredUser {
 
 #[derive(Serialize)]
 struct LoginResponse {
-	token: String,
 	user: SanitizedUser,
 }
 
@@ -254,9 +253,9 @@ async fn login_user(
 		Ok(_) => {
 			let token = encode_user_token(user.id, security_config.jwt_secret.as_bytes());
 
-			let cookie = Cookie::build(("auth_token", token.clone()))
+			let cookie = Cookie::build(("auth_token", token))
 				.http_only(true) // Prevent JavaScript access
-				.secure(false) // Only send over HTTPS
+				.secure(true) // Only send over HTTPS
 				.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
 				.path("/") // Path for which the cookie is valid
 				.max_age(time::Duration::hours(1))
@@ -267,7 +266,6 @@ async fn login_user(
 			Ok((
 				jar2,
 				Json(LoginResponse {
-					token,
 					user: user.sanitize(),
 				}),
 			))
@@ -316,7 +314,7 @@ async fn my_links(
 async fn logout_user(jar: CookieJar) -> CookiedAPIResponse<GenericMessage> {
 	let cookie = Cookie::build(("auth_token", "deleted"))
 		.http_only(true) // Prevent JavaScript access
-		.secure(false) // Only send over HTTPS
+		.secure(true) // Only send over HTTPS
 		.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
 		.path("/") // Path for which the cookie is valid
 		.max_age(time::Duration::hours(1)) // Set cookie expiration
