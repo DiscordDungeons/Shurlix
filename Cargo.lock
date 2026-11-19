@@ -472,7 +472,7 @@ dependencies = [
 
 [[package]]
 name = "db"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "chrono",
  "diesel",
@@ -773,7 +773,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "0.1.0"
+version = "0.2.0"
 
 [[package]]
 name = "futures-core"
@@ -1955,7 +1955,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "shurlix"
-version = "1.0.0"
+version = "1.1.0"
 
 [[package]]
 name = "signature"
@@ -2464,7 +2464,7 @@ dependencies = [
 
 [[package]]
 name = "web-server"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "argon2",
  "axum",
