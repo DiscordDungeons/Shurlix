@@ -17,10 +17,13 @@ async fn set_initial_config(
 	Json(payload): Json<Config>,
 ) -> APIResultWithError<GenericMessage, SetConfigError> {
 	if config.setup.setup_done {
-		return Ok((StatusCode::NOT_FOUND, GenericMessage::new("Not found")))
+		return Err((
+			StatusCode::FORBIDDEN,
+			Json(SetConfigError {
+				errors: vec!["Setup has already been completed.".to_string()],
+			}),
+		))
 	};
-
-	println!("Payload {:#?}", payload);
 
 	if let Err(errors) = payload.validate() {
 		return Err((StatusCode::BAD_REQUEST, Json(SetConfigError { errors })))
