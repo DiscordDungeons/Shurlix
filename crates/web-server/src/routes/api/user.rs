@@ -127,6 +127,10 @@ async fn register_user(
 	let app_config = config.app.unwrap();
 	let security_config = config.security.unwrap();
 
+	if !app_config.allow_registering {
+		return Err((StatusCode::FORBIDDEN, GenericMessage::new("Registration is disabled.")));
+	}
+
 	if payload.email != payload.confirm_email {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Emails don't match")));
 	}
