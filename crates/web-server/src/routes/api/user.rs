@@ -88,6 +88,7 @@ struct ChangePasswordRequest {
 struct UserUpdateRequest {
 	username: Option<String>,
 	email: Option<String>,
+	password: Option<String>,
 }
 
 impl From<Entropy> for CheckPasswordResponse {
@@ -292,6 +293,8 @@ async fn my_links(
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
+	let pagination = pagination.clamped();
+
 	let conn = &mut pool
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
@@ -438,7 +441,6 @@ async fn delete_me(AuthedUser(user): AuthedUser, Extension(pool): Extension<DbPo
 	}
 }
 
-// TODO: Ask for password?
 async fn update_user(
 	AuthedUser(user): AuthedUser,
 	Extension(email): Extension<Email>,
@@ -466,6 +468,24 @@ async fn update_user(
 
 	match payload.email {
 		Some(email) => {
+			// Changing the account email requires confirming the current password.
+			let password = match payload.password {
+				Some(ref password) if !password.is_empty() => password,
+				_ => {
+					return Err((
+						StatusCode::FORBIDDEN,
+						GenericMessage::new("Current password is required to change the email."),
+					))
+				}
+			};
+
+			let parsed_hash = PasswordHash::new(&user.password_hash)
+				.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
+
+			if Argon2::default().verify_password(password.as_bytes(), &parsed_hash).is_err() {
+				return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials.")));
+			}
+
 			if User::email_exists(&email, conn) {
 				return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
 			}
