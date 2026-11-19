@@ -61,7 +61,6 @@ struct RegisteredUser {
 
 #[derive(Serialize)]
 struct LoginResponse {
-	token: String,
 	user: SanitizedUser,
 }
 
@@ -89,6 +88,7 @@ struct ChangePasswordRequest {
 struct UserUpdateRequest {
 	username: Option<String>,
 	email: Option<String>,
+	password: Option<String>,
 }
 
 impl From<Entropy> for CheckPasswordResponse {
@@ -127,6 +127,10 @@ async fn register_user(
 	let app_config = config.app.unwrap();
 	let security_config = config.security.unwrap();
 
+	if !app_config.allow_registering {
+		return Err((StatusCode::FORBIDDEN, GenericMessage::new("Registration is disabled.")));
+	}
+
 	if payload.email != payload.confirm_email {
 		return Err((StatusCode::BAD_REQUEST, GenericMessage::new("Emails don't match")));
 	}
@@ -149,12 +153,8 @@ async fn register_user(
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
-	if User::email_exists(&payload.email, conn) {
-		return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
-	}
-
-	if User::username_exists(&payload.username, conn) {
-		return Err((StatusCode::CONFLICT, GenericMessage::new("Username already in use")));
+	if User::email_exists(&payload.email, conn) || User::username_exists(&payload.username, conn) {
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Email or username already in use.")));
 	}
 
 	let salt = SaltString::generate(&mut OsRng);
@@ -254,9 +254,9 @@ async fn login_user(
 		Ok(_) => {
 			let token = encode_user_token(user.id, security_config.jwt_secret.as_bytes());
 
-			let cookie = Cookie::build(("auth_token", token.clone()))
+			let cookie = Cookie::build(("auth_token", token))
 				.http_only(true) // Prevent JavaScript access
-				.secure(false) // Only send over HTTPS
+				.secure(true) // Only send over HTTPS
 				.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
 				.path("/") // Path for which the cookie is valid
 				.max_age(time::Duration::hours(1))
@@ -267,7 +267,6 @@ async fn login_user(
 			Ok((
 				jar2,
 				Json(LoginResponse {
-					token,
 					user: user.sanitize(),
 				}),
 			))
@@ -294,6 +293,8 @@ async fn my_links(
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
+	let pagination = pagination.clamped();
+
 	let conn = &mut pool
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
@@ -316,7 +317,7 @@ async fn my_links(
 async fn logout_user(jar: CookieJar) -> CookiedAPIResponse<GenericMessage> {
 	let cookie = Cookie::build(("auth_token", "deleted"))
 		.http_only(true) // Prevent JavaScript access
-		.secure(false) // Only send over HTTPS
+		.secure(true) // Only send over HTTPS
 		.same_site(axum_extra::extract::cookie::SameSite::Lax) // Control cross-site sending
 		.path("/") // Path for which the cookie is valid
 		.max_age(time::Duration::hours(1)) // Set cookie expiration
@@ -440,7 +441,6 @@ async fn delete_me(AuthedUser(user): AuthedUser, Extension(pool): Extension<DbPo
 	}
 }
 
-// TODO: Ask for password?
 async fn update_user(
 	AuthedUser(user): AuthedUser,
 	Extension(email): Extension<Email>,
@@ -468,6 +468,24 @@ async fn update_user(
 
 	match payload.email {
 		Some(email) => {
+			// Changing the account email requires confirming the current password.
+			let password = match payload.password {
+				Some(ref password) if !password.is_empty() => password,
+				_ => {
+					return Err((
+						StatusCode::FORBIDDEN,
+						GenericMessage::new("Current password is required to change the email."),
+					))
+				}
+			};
+
+			let parsed_hash = PasswordHash::new(&user.password_hash)
+				.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal Server Error")))?;
+
+			if Argon2::default().verify_password(password.as_bytes(), &parsed_hash).is_err() {
+				return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("Invalid credentials.")));
+			}
+
 			if User::email_exists(&email, conn) {
 				return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
 			}

@@ -1,6 +1,6 @@
 [package]
 name = "web-server"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 #build = "build.rs"
 
@@ -24,7 +24,7 @@ url = "2.5.2"
 lazy_static = "1.5.0"
 argon2 = "0.5.3"
 email_address = "0.2.9"
-jsonwebtoken = "=9.3.0"
+jsonwebtoken = "10.3.0"
 axum-extra = { version = "0.9.4", features = ["cookie"] }
 time = "0.3.36"
 log = "0.4.22"
