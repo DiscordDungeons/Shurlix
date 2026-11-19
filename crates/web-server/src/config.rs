@@ -105,8 +105,8 @@ impl Config {
 
 		// Validate SecurityConfig
 		if let Some(security) = &self.security {
-			if security.jwt_secret.is_empty() {
-				errors.push("JWT secret (security.jwt_secret) is empty".to_string());
+			if security.jwt_secret.len() < 32 {
+				errors.push("JWT secret (security.jwt_secret) must be at least 32 characters long".to_string());
 			}
 		} else {
 			errors.push("Security configuration is required".to_string());
