@@ -153,12 +153,8 @@ async fn register_user(
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
-	if User::email_exists(&payload.email, conn) {
-		return Err((StatusCode::CONFLICT, GenericMessage::new("Email already in use")));
-	}
-
-	if User::username_exists(&payload.username, conn) {
-		return Err((StatusCode::CONFLICT, GenericMessage::new("Username already in use")));
+	if User::email_exists(&payload.email, conn) || User::username_exists(&payload.username, conn) {
+		return Err((StatusCode::CONFLICT, GenericMessage::new("Email or username already in use.")));
 	}
 
 	let salt = SaltString::generate(&mut OsRng);
