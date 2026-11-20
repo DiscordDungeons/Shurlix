@@ -14,7 +14,7 @@ struct SetConfigError {
 async fn set_initial_config(
 	Extension(mut config): Extension<Config>,
 	Extension(shutdown_tx): Extension<Arc<Mutex<Option<oneshot::Sender<()>>>>>,
-	Json(payload): Json<Config>,
+	Json(mut payload): Json<Config>,
 ) -> APIResultWithError<GenericMessage, SetConfigError> {
 	if config.setup.setup_done {
 		return Err((
@@ -28,6 +28,10 @@ async fn set_initial_config(
 	if let Err(errors) = payload.validate() {
 		return Err((StatusCode::BAD_REQUEST, Json(SetConfigError { errors })))
 	};
+
+	// Never persist the client-supplied setup state: once the initial config
+	// is written, setup is done and this endpoint must stay closed.
+	payload.set_is_setup_done(true);
 
 	config.set(payload);
 
