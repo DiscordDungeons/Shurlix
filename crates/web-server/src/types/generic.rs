@@ -7,9 +7,10 @@ pub struct PaginationQuery {
 }
 
 impl PaginationQuery {
-	/// Clamps pagination parameters to sane bounds: page >= 1, 1 <= per_page <= 100.
+	/// Clamps pagination parameters to sane bounds: 1 <= page <= 1_000_000, 1 <= per_page <= 100.
+	/// The page cap keeps (page - 1) * per_page from overflowing.
 	pub fn clamped(mut self) -> Self {
-		self.page = self.page.max(1);
+		self.page = self.page.clamp(1, 1_000_000);
 		self.per_page = self.per_page.clamp(1, 100);
 		self
 	}
