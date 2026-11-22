@@ -569,3 +569,65 @@ pub fn user_router() -> Router {
 		.route("/me/password", post(update_password))
 		.route("/verify/:token", get(validate_email))
 }
+
+#[cfg(test)]
+mod test {
+	use super::*;
+
+	fn config_with_registration(allow_registering: bool) -> Config {
+		let toml_str = format!(
+			r#"
+			[db]
+			url = "postgres://username:password@localhost/shurlix"
+
+			[app]
+			shortened_link_length = 8
+			allow_anonymous_shorten = true
+			allow_registering = {}
+			base_url = "https://example.com"
+			enable_email_verification = false
+			email_verification_ttl = "1h"
+
+			[security]
+			jwt_secret = "0123456789abcdef0123456789abcdef"
+			min_password_strength = 3
+
+			[smtp]
+			enabled = false
+
+			[setup]
+			setup_done = true
+			"#,
+			allow_registering
+		);
+
+		toml::de::from_str(&toml_str).unwrap()
+	}
+
+	fn register_payload() -> RegisterRequest {
+		RegisterRequest {
+			username: "user".to_string(),
+			password: "correct horse battery staple".to_string(),
+			confirm_password: "correct horse battery staple".to_string(),
+			email: "user@example.com".to_string(),
+			confirm_email: "user@example.com".to_string(),
+		}
+	}
+
+	#[tokio::test]
+	async fn register_user_forbidden_when_registration_disabled() {
+		// The allow_registering gate returns before the pool is ever used,
+		// so a lazy pool over an unreachable database is fine.
+		let pool = db::create_pool_lazy("postgres://127.0.0.1:1/nonexistent");
+
+		let result = register_user(
+			Extension(pool),
+			Extension(config_with_registration(false)),
+			Extension(Email::default()),
+			Json(register_payload()),
+		)
+		.await;
+
+		assert!(matches!(result, Err((StatusCode::FORBIDDEN, _))));
+	}
+}
