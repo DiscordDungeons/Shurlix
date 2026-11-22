@@ -1,5 +1,5 @@
 # Database configuration
-[database]
+[db]
 url = "postgres://username:password@localhost/shurlix"
 
 # Application configuration
@@ -25,7 +25,9 @@ username = ""
 password = ""
 from = ""
 host = ""
-port = ""
+# Optional; omit or set to a number (e.g. 587). An empty string here makes the
+# whole config fail to load, since the port must be a number.
+# port = 587
 
 # Setup status (don't touch this, it's handled automatically).
 [setup]
