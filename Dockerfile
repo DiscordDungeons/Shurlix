@@ -1,4 +1,4 @@
-FROM --platform="linux/amd64" debian:bullseye-20240211-slim as build
+FROM --platform="linux/amd64" debian:bookworm-20261104-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc as build
 
 COPY ./install-packages.sh .
 RUN chmod +x ./install-packages.sh 
@@ -10,7 +10,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Install node.js
 
-RUN curl -sL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
+RUN curl -sL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh
 RUN USER=root bash nodesource_setup.sh
 RUN USER=root apt install -y nodejs
 
@@ -41,7 +41,7 @@ RUN ls /shurlix/target/release
 
 #Final build
 
-FROM --platform="linux/amd64" debian:bullseye-20240211-slim
+FROM --platform="linux/amd64" debian:bookworm-20261104-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
 
 COPY ./install-packages.sh .
 RUN chmod +x ./install-packages.sh 
@@ -51,10 +51,14 @@ RUN chmod a+x /etc/ssl/certs
 
 RUN update-ca-certificates
 
-WORKDIR /home
+# Run as an unprivileged user
+RUN useradd --system --create-home --uid 10001 shurlix
 
-COPY --from=build /shurlix/target/release/web-server /home/shurlix
+WORKDIR /home/shurlix
 
+COPY --from=build --chown=shurlix:shurlix /shurlix/target/release/web-server /home/shurlix/shurlix
+
+USER shurlix
 
 EXPOSE 3000
-CMD ["/home/shurlix"]
+CMD ["/home/shurlix/shurlix"]

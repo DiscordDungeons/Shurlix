@@ -93,13 +93,14 @@ async fn get_paged_domains(
 		return Err((StatusCode::UNAUTHORIZED, GenericMessage::new("You are not allowed to perform this action.")));
 	}
 
+	let pagination = pagination.clamped();
+
 	let conn = &mut pool
 		.get()
 		.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::from_string(e.to_string())))?;
 
 	let items = Domain::get_paginated(pagination.page, pagination.per_page, conn)
-		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
-	let total_count = Domain::get_total_count(conn)
+		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;	let total_count = Domain::get_total_count(conn)
 		.map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, GenericMessage::new("Internal server error.")))?;
 
 	Ok((StatusCode::OK, Json(PaginatedResponse::<Domain> { items, total_count })))

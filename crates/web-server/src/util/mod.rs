@@ -15,10 +15,10 @@ pub fn generate_unique_string(length: usize) -> String {
 		.collect()
 }
 
-/// Checks is given string is url
+/// Checks if the given string is a valid http(s) URL
 pub fn is_url(url: &str) -> bool {
 	match Url::parse(url) {
-		Ok(_) => true,
+		Ok(parsed) => matches!(parsed.scheme(), "http" | "https"),
 		Err(_) => false,
 	}
 }
@@ -59,6 +59,20 @@ mod test {
 	#[test]
 	fn strip_localhost_port_test() {
 		assert_eq!(strip_protocol("http://localhost:3000").unwrap(), "localhost:3000")
+	}
+
+	#[test]
+	fn is_url_accepts_http_and_https() {
+		assert!(is_url("http://example.com"));
+		assert!(is_url("https://example.com/path?q=1"));
+	}
+
+	#[test]
+	fn is_url_rejects_other_schemes() {
+		assert!(!is_url("javascript:alert(1)"));
+		assert!(!is_url("data:text/html;base64,PGI+"));
+		assert!(!is_url("ftp://example.com"));
+		assert!(!is_url("not a url"));
 	}
 
 	#[test]

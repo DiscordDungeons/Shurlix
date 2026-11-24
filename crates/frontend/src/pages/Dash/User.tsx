@@ -14,6 +14,7 @@ const InternalUserPage = () => {
 		confirmPassword: '',
 		username: '',
 		email: '',
+		accountPassword: '',
 	})
 
 	const handleChange = (e) => {
@@ -35,6 +36,7 @@ const InternalUserPage = () => {
 		updateUser({
 			email: formData.email === '' ? null : formData.email,
 			username: formData.username === '' ? null : formData.username,
+			password: formData.accountPassword === '' ? null : formData.accountPassword,
 		})
 	} 
 
@@ -97,6 +99,19 @@ const InternalUserPage = () => {
 										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-indigo-400"
 										onChange={handleChange}
 										value={formData.email}
+									/>
+								</div>
+
+								{/* Current password (required when changing the email) */}
+								<div class="mb-6">
+									<label class="block text-gray-700 dark:text-gray-300 mb-2" for="accountPassword">Current password (required to change email)</label>
+									<input
+										id="accountPassword"
+										name="accountPassword"
+										type="password"
+										class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:focus:ring-indigo-400"
+										onChange={handleChange}
+										value={formData.accountPassword}
 									/>
 								</div>
 
